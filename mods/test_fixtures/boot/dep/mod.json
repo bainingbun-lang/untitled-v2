@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "fixture.dep",
+  "version": "1.0.0",
+  "engine": "4.7",
+  "priority": 20,
+  "depends": {"fixture.base": "^1.0.0"}
+}
