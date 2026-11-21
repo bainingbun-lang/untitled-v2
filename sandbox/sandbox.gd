@@ -1,6 +1,7 @@
 class_name Sandbox
 extends Node3D
 
+const RemoteLog = preload("res://debug/remote_log.gd")
 
 const MapWorldBuilder = preload("res://maps/map_world_builder.gd")
 const BasicNpc = preload("res://npc/basic_npc.gd")
@@ -17,10 +18,12 @@ var _weapon_pickable: WeaponPickable = null
 
 
 func _ready() -> void:
+	RemoteLog.crumb("SANDBOX: ready start")
 	_build_map()
 	_spawn_npcs()
 	_equip_weapon()
 	_print_summary()
+	RemoteLog.crumb("SANDBOX: ready end")
 
 
 func _build_map() -> void:
@@ -174,3 +177,11 @@ func _print_summary() -> void:
 	print("NPCs: ", "OK" if _npcs_ok else "FALLÓ")
 	print("Arma: ", "OK" if _weapon_ok else "FALLÓ")
 	print("========================")
+
+
+func _process(_delta: float) -> void:
+	var frame := Engine.get_frames_drawn()
+	if frame == 1:
+		RemoteLog.crumb("SANDBOX: frame 1")
+	elif frame == 60:
+		RemoteLog.crumb("SANDBOX: frame 60")

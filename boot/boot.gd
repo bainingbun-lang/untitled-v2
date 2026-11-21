@@ -1,6 +1,9 @@
 extends Node
 
+const RemoteLog = preload("res://debug/remote_log.gd")
+
 func _ready():
+	RemoteLog.crumb("BOOT: _ready start")
 	var label = Label.new()
 	label.name = "BootStatus"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -27,6 +30,8 @@ func _initialize_xr():
 		print("Boot: Failed to initialize OpenXR")
 		return
 	
+	RemoteLog.crumb("BOOT: XR initialized")
+	
 	status_label.text = "OpenXR inicializado. Configurando viewport..."
 	
 	var viewport = get_viewport()
@@ -42,4 +47,6 @@ func _initialize_xr():
 	status_label.text = "XR listo. Cargando demo_room..."
 	print("Boot: XR initialized successfully, loading demo_room")
 	
+	RemoteLog.crumb("BOOT: before change_scene")
 	await get_tree().change_scene_to_file("res://sandbox/sandbox.tscn")
+	RemoteLog.crumb("BOOT: after change_scene")
