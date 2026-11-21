@@ -2,9 +2,6 @@ import sys
 
 path = sys.argv[1]
 updates = {
-    "application": {
-        "run/main_scene": '"res://scenes/vr/vr_boot.tscn"',
-    },
     "rendering": {
         "renderer/rendering_method": '"mobile"',
         "renderer/rendering_method.mobile": '"mobile"',

@@ -9,9 +9,7 @@ VENDOR_URL="https://github.com/GodotVR/godot_openxr_vendors/releases/download/${
 TEMPLATE_ZIP="$HOME/.local/share/godot/export_templates/4.7.stable/android_source.zip"
 KEYSTORE="${KEYSTORE:-$HOME/.android/debug.keystore}"
 rm -rf "$P"; mkdir -p "$P/addons" "$P/android/build" "$(dirname "$OUT")"
-for d in core scenes assets mods maps; do [ -d "$ROOT/$d" ] && cp -r "$ROOT/$d" "$P/"; done
-cp "$ROOT/project.godot" "$ROOT/export_presets.cfg" "$ROOT/icon.svg" "$P/"; [ -f "$ROOT/icon.svg.import" ] && cp "$ROOT/icon.svg.import" "$P/"
-[ -f "$ROOT/openxr_action_map.tres" ] && cp "$ROOT/openxr_action_map.tres" "$P/"
+for e in "$ROOT"/* "$ROOT"/.godot; do b="$(basename "$e")"; case "$b" in build|backups|briefs|spikes|native|.git|.godot|*.md) continue;; esac; [ -e "$e" ] && cp -r "$e" "$P/"; done
 T="$(mktemp -d)"; curl -fsSL "$VENDOR_URL" -o "$T/v.zip"; echo "$VENDOR_SHA256  $T/v.zip" | sha256sum -c -
 unzip -q "$T/v.zip" -d "$T/u"; A="$(find "$T/u" -type d -name godotopenxrvendors | head -1)"; [ -n "$A" ] || { echo "sin addon"; exit 1; }
 cp -r "$A" "$P/addons/"
