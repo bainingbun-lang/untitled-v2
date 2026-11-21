@@ -9,7 +9,7 @@ VENDOR_URL="https://github.com/GodotVR/godot_openxr_vendors/releases/download/${
 TEMPLATE_ZIP="$HOME/.local/share/godot/export_templates/4.7.stable/android_source.zip"
 KEYSTORE="${KEYSTORE:-$HOME/.android/debug.keystore}"
 rm -rf "$P"; mkdir -p "$P/addons" "$P/android/build" "$(dirname "$OUT")"
-for d in $(cd "$ROOT" && ls -d */ | tr -d /); do case "$d" in build|addons|android|tools|.github|.git) continue;; esac; cp -r "$ROOT/$d" "$P/"; done
+for d in core scenes assets mods maps; do [ -d "$ROOT/$d" ] && cp -r "$ROOT/$d" "$P/"; done
 cp "$ROOT/project.godot" "$ROOT/export_presets.cfg" "$ROOT/icon.svg" "$P/"; [ -f "$ROOT/icon.svg.import" ] && cp "$ROOT/icon.svg.import" "$P/"
 [ -f "$ROOT/openxr_action_map.tres" ] && cp "$ROOT/openxr_action_map.tres" "$P/"
 T="$(mktemp -d)"; curl -fsSL "$VENDOR_URL" -o "$T/v.zip"; echo "$VENDOR_SHA256  $T/v.zip" | sha256sum -c -
