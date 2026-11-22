@@ -11,7 +11,7 @@ const GameConfig = preload("res://storage/game_config.gd")
 const CATALOG := "res://maps/catalog.json"
 const DIFFICULTIES := [["Fácil", "facil"], ["Normal", "normal"], ["Difícil", "dificil"]]
 const GORE_LEVELS := ["Apagado", "Normal", "Extremo"]
-const POCKET_LABELS := {"pistol": "Pistola", "ak47": "AK-47", "knife": "Cuchillo", "sniper": "Sniper", "machete": "Machete", "shotgun": "Escopeta"}
+const POCKET_LABELS := {"pistol": "Pistola", "ak47": "AK-47", "knife": "Cuchillo", "sniper": "Sniper", "machete": "Machete", "shotgun": "Escopeta", "barrett": "Barrett"}
 
 const BG := Color("0d1014")
 const CARD := Color("161b22")

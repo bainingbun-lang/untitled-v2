@@ -11,7 +11,7 @@ const DIFFICULTY_SCALES := {"facil": 0.5, "normal": 1.0, "dificil": 1.5}
 static var difficulty: String = "normal"
 static var gore_level: int = 1
 ## Arma del bolsillo izquierdo (se saca con la mano izquierda).
-const POCKET_WEAPONS := ["pistol", "ak47", "knife", "sniper", "machete", "shotgun"]
+const POCKET_WEAPONS := ["pistol", "ak47", "knife", "sniper", "machete", "shotgun", "barrett"]
 static var left_pocket: String = "pistol"
 ## Relleno de NPC por m² de mapa, y zombis en lugar de algunos civiles.
 const DENSITY_PER_M2 := {"bajo": 0.08, "medio": 0.16, "alto": 0.3}
