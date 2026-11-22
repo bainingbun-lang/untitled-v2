@@ -71,8 +71,9 @@ func _process(delta: float) -> void:
 	if _check_time > 0.0 or not is_instance_valid(_eye):
 		return
 	_check_time = 0.5
+	_npcs = _npcs.filter(func(n) -> bool: return is_instance_valid(n))
 	for npc in _npcs:
-		if not is_instance_valid(npc) or not (npc is Node3D):
+		if not (npc is Node3D) or npc.get("_dead") == true:
 			continue
 		var n := npc as Node3D
 		var to_player := _eye.global_position - n.global_position
