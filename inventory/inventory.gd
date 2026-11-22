@@ -12,6 +12,7 @@ const SCENES := {
 	"pistol": "res://weapons/pistol.tscn",
 	"knife": "res://weapons/knife.tscn",
 	"sniper": "res://weapons/sniper.tscn",
+	"shotgun": "res://weapons/shotgun.tscn",
 	"machete": "res://weapons/machete.tscn",
 }
 
