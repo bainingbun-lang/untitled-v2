@@ -41,7 +41,15 @@ func _watch(npc: Node) -> void:
 func _on_damaged(_amount: float, _health: float, npc: Node) -> void:
 	if Time.get_ticks_msec() - int(_born.get(npc, 0)) < GRACE_TIME * 1000.0:
 		return
-	_shout(npc, "¡REFUERZOS!")
+	# Reacción según la gravedad: golpe leve pide que pare, herida grave pide ayuda, y si queda poca vida se rinde.
+	var text := "¡REFUERZOS!"
+	if _health <= 25.0:
+		text = "¡Basta, me rindo!"
+	elif _amount < 10.0:
+		text = "¡Oye, basta!"
+	_shout(npc, text)
+	if _health <= 25.0:
+		return
 	if _budget > 0 and is_instance_valid(_map):
 		_budget -= 1
 		var pos: Vector3 = (npc as Node3D).global_position + Vector3(randf_range(-3, 3), 0, randf_range(-3, 3))
