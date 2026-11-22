@@ -10,5 +10,9 @@
   {
     "name": "Oficina (CC0)",
     "scene": "res://maps/downloaded/office/office_map.tscn"
+  },
+  {
+    "name": "Escuela (CC0)",
+    "scene": "res://maps/downloaded/school/school_map.tscn"
   }
 ]
