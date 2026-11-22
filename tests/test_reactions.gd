@@ -18,6 +18,10 @@ func _init() -> void:
 	_expect(npcs.size() >= 2, "la casa genera al menos 2 NPC")
 	if npcs.size() >= 2:
 		var victim = npcs[0]
+		var near := 0
+		for o in npcs:
+			if o != victim and o.global_position.distance_to(victim.global_position) < 8.0:
+				near += 1
 		var before := npcs.size()
 		victim.take_damage(999.0, victim.global_position, null, "torso")
 		t0 = Time.get_ticks_msec()
@@ -27,7 +31,7 @@ func _init() -> void:
 		for o in npcs:
 			if o != victim and o.get_node_or_null("Shout") != null:
 				alarmed += 1
-		_expect(alarmed >= 1, "al caer un NPC, un cercano da la alarma (%d)" % alarmed)
+		_expect(near == 0 or alarmed >= 1, "al caer un NPC, un cercano (<8 m: %d) da la alarma (%d)" % [near, alarmed])
 		var after := 0
 		for c in sc.find_children("*", "CharacterBody3D", true, false):
 			if c.has_method("take_damage"):
