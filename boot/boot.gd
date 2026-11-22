@@ -14,7 +14,7 @@ func _ready():
 	call_deferred("_initialize_xr")
 
 func _initialize_xr():
-	var status_label = get_node("BootStatus")
+	var status_label = get_node("Layer/BootStatus")
 	var xr_interface = XRServer.find_interface("OpenXR")
 	
 	if not xr_interface:
