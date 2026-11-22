@@ -9,6 +9,7 @@ var _fails := 0
 
 
 func _init() -> void:
+	ModPacks.remove_installed("untitled.demo-catalog.zip")  # estado limpio aunque quede de una prueba previa
 	var example := ProjectSettings.globalize_path("res://mods/examples/demo_catalog.zip")
 	var bad := _make_bad_zip()
 
