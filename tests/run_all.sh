@@ -19,4 +19,5 @@ run() {
 }
 run "mods (zip, activar, quitar)" res://tests/test_mod_packs.gd "RESULTADO: OK"
 run "armas (recarga, disparo, cadencia)" res://weapons/test_weapon_handling.gd "PASS ("
+run "combate (perdigones, cabeza)" res://tests/test_combat.gd "RESULTADO: OK"
 exit $fail
