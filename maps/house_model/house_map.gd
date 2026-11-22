@@ -3,6 +3,7 @@ extends Node3D
 ## Mapa jugable con la casa descargada (CC0, ver CREDITS.md). Colisión por malla del modelo,
 ## piso y hasta 7 NPC. El jugador y la luz vienen de house_map.tscn.
 const NpcSpawner = preload("res://npc/npc_spawner.gd")
+const NpcReactions = preload("res://npc/npc_reactions.gd")
 const MAX_NPCS := 7
 
 
@@ -85,5 +86,8 @@ func _spawn_npcs() -> void:
 	var points := NpcSpawner.floor_points(space, fp[0], fp[1], total, [])
 	var eye := get_node_or_null("VRPlayer/CharacterBody3D/Origin/Camera") as Node3D
 	var spec := npc_spec(points.size())
-	NpcSpawner.spawn(self, spec, points, eye)
+	var made: Array = NpcSpawner.spawn(self, spec, points, eye)
+	var rx := NpcReactions.new()
+	add_child(rx)
+	rx.setup(self, eye, made)
 	print("Mapa: area %.0f m2, NPC pedidos %d, colocados %d" % [area, total, points.size()])
