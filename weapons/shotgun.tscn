@@ -54,6 +54,8 @@ grip_action = "grip_click"
 
 [node name="Recoil" type="Node" parent="."]
 script = ExtResource("4_rc")
+kick_angle = 7.0
+kick_back = 0.04
 
 [node name="Handling" type="Node" parent="."]
 script = ExtResource("5_wh")
