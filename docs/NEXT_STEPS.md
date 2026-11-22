@@ -57,3 +57,10 @@ Versión estable con menú principal (Jugar, Mods, Configuración) y un sistema 
 - Retroceso: ajustado en escopeta y Barrett; no visto en VR.
 - Todo lo de VR con mando real: sin probar (no hay casco aquí).
 - Mapas descargados: escuela, casa, oficina. Faltan hospital y edificio de trabajo (sin fuente CC0 con descarga directa).
+
+### Pasada de arsenal y gore (sesión de 40 min máx.)
+- Arsenal ampliado: revólver, fusil de asalto, PDW, tanto y hacha, con estadísticas propias. Prueba `tests/test_arsenal.gd` carga todas las armas.
+- Recarga manual: el botón A saca el cargador y el B corre la corredera en todas las armas basadas en `vr_weapon_pistol.gd` (pistola, AK, fusil, PDW, subfusil). Probado en headless, no en mando real.
+- Gore: rastro de sangre al piso desde heridas abiertas y decapitaciones.
+- Modelo 3D pendiente: `godot-xr-tools/assets/3dmodelscc0/models/sniper_rifle/sniper_rifle.glb` (sitio 3dmodelscc0, que es CC0; el archivo de licencia no lo dice explícitamente, confirmar). Falta importarlo en Godot (`--import` falla aquí con segfault) y poner el cuerpo en el sniper.
+- Pendiente: más modelos de armas descargados, gore con partes del cuerpo que salgan volando, tácticas de NPC.
