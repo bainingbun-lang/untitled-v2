@@ -19,5 +19,12 @@ printf '\norg.gradle.daemon=false\norg.gradle.jvmargs=-Xmx3g\n' >> "$P/android/b
 python3 "$ROOT/tools/vr_project_settings.py" "$P/project.godot"
 sed -i "s#/data/data/com.termux/files/home/untitled-control/keys/debug.keystore#$KEYSTORE#g" "$P/export_presets.cfg"
 "$GODOT" --headless --path "$P" --import || true
-"$GODOT" --headless --path "$P" --export-debug "$PRESET" "$OUT"
+if [ "${RELEASE:-0}" = "1" ]; then
+  # Build de release: con sonido (el silencio solo aplica a builds de depuracion).
+  # Firmada con el keystore de CI para poder instalarla en el Quest.
+  sed -i "s#^keystore/release=\"\"#keystore/release=\"$KEYSTORE\"#; s#^keystore/release_user=\"\"#keystore/release_user=\"androiddebugkey\"#; s#^keystore/release_password=\"\"#keystore/release_password=\"android\"#" "$P/export_presets.cfg"
+  "$GODOT" --headless --path "$P" --export-release "$PRESET" "$OUT"
+else
+  "$GODOT" --headless --path "$P" --export-debug "$PRESET" "$OUT"
+fi
 test -s "$OUT" && echo "APK_OK $(stat -c%s "$OUT") $(sha256sum "$OUT" | cut -c1-16)"

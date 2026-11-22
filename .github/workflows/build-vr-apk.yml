@@ -4,6 +4,11 @@ on:
     branches: [main, feature/mod-system]
     paths-ignore: ['docs/**', 'briefs/**', '**/*.md']
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Build de release con sonido (APK firmado con la clave de CI)"
+        type: boolean
+        default: false
 permissions:
   contents: write
 jobs:
@@ -50,6 +55,15 @@ jobs:
           sed -i 's/^          //' ~/.config/godot/editor_settings-4.7.tres
       - name: Compilar APK de VR
         run: bash tools/ci_build_vr.sh "$PWD/out/untitled_vr_debug.apk"
+      - name: Compilar APK de release (con sonido)
+        if: inputs.release
+        run: RELEASE=1 bash tools/ci_build_vr.sh "$PWD/out/untitled_vr_release.apk"
+      - name: Subir APK de release
+        if: inputs.release
+        uses: actions/upload-artifact@v4
+        with:
+          name: untitled-vr-release-apk
+          path: out/untitled_vr_release.apk
       - name: Verificar APK
         run: |
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify out/untitled_vr_debug.apk
