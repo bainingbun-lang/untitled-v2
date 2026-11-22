@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://weapons/knife.gd" id="1"]
+[ext_resource type="ArrayMesh" path="res://weapons/knife/knife_mesh.tres" id="2"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.3, 0.037, 0.009)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_blade"]
+size = Vector3(0.16, 0.03, 0.02)
+
+[node name="Bate" type="RigidBody3D"]
+collision_layer = 2
+collision_mask = 7
+mass = 0.3
+continuous_cd = true
+freeze = true
+script = ExtResource("1")
+base_damage = 40.0
+dismember_speed = 99.0
+center_pickup_on = NodePath("GripPoint")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = ExtResource("2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_body")
+
+[node name="GripPoint" type="Marker3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -0.08, 0, 0)
+
+[node name="Blade" type="Area3D" parent="."]
+position = Vector3(0.065, 0, 0)
+collision_layer = 0
+collision_mask = 1
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Blade"]
+shape = SubResource("BoxShape3D_blade")

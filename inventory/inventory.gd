@@ -21,6 +21,8 @@ const SCENES := {
 	"pdw": "res://weapons/pdw.tscn",
 	"tanto": "res://weapons/tanto.tscn",
 	"hacha": "res://weapons/hacha.tscn",
+	"katana": "res://weapons/katana.tscn",
+	"bate": "res://weapons/bate.tscn",
 }
 
 @export var menu_action := "menu_button"

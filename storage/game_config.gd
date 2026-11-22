@@ -11,7 +11,7 @@ const DIFFICULTY_SCALES := {"facil": 0.5, "normal": 1.0, "dificil": 1.5}
 static var difficulty: String = "normal"
 static var gore_level: int = 1
 ## Arma del bolsillo izquierdo (se saca con la mano izquierda).
-const POCKET_WEAPONS := ["pistol", "ak47", "knife", "sniper", "machete", "shotgun", "barrett", "smg", "revolver", "fusil", "pdw", "tanto", "hacha"]
+const POCKET_WEAPONS := ["pistol", "ak47", "knife", "sniper", "machete", "shotgun", "barrett", "smg", "revolver", "fusil", "pdw", "tanto", "hacha", "katana", "bate"]
 static var left_pocket: String = "pistol"
 ## Arma del bolsillo derecho (se saca con la mano derecha).
 static var right_pocket: String = "ak47"

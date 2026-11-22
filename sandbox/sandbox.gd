@@ -268,5 +268,5 @@ func _process(_delta: float) -> void:
 
 ## Ruta de escena de un arma por id (misma tabla que el inventario).
 static func inventory_scene(id: String) -> String:
-	var table := {"ak47": "res://weapons/ak47.tscn", "pistol": "res://weapons/pistol.tscn", "knife": "res://weapons/knife.tscn", "sniper": "res://weapons/sniper.tscn", "machete": "res://weapons/machete.tscn", "shotgun": "res://weapons/shotgun.tscn", "barrett": "res://weapons/barrett.tscn", "smg": "res://weapons/smg.tscn", "revolver": "res://weapons/revolver.tscn", "fusil": "res://weapons/fusil.tscn", "pdw": "res://weapons/pdw.tscn", "tanto": "res://weapons/tanto.tscn", "hacha": "res://weapons/hacha.tscn"}
+	var table := {"ak47": "res://weapons/ak47.tscn", "pistol": "res://weapons/pistol.tscn", "knife": "res://weapons/knife.tscn", "sniper": "res://weapons/sniper.tscn", "machete": "res://weapons/machete.tscn", "shotgun": "res://weapons/shotgun.tscn", "barrett": "res://weapons/barrett.tscn", "smg": "res://weapons/smg.tscn", "revolver": "res://weapons/revolver.tscn", "fusil": "res://weapons/fusil.tscn", "pdw": "res://weapons/pdw.tscn", "tanto": "res://weapons/tanto.tscn", "hacha": "res://weapons/hacha.tscn", "katana": "res://weapons/katana.tscn", "bate": "res://weapons/bate.tscn"}
 	return str(table.get(id, "res://weapons/ak47.tscn"))
