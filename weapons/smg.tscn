@@ -1,0 +1,71 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://weapons/vr_weapon_pistol.gd" id="1"]
+[ext_resource type="PackedScene" path="res://weapons/ak47/ak47.glb" id="2"]
+[ext_resource type="Script" path="res://weapons/two_handed.gd" id="3_th"]
+
+[ext_resource type="Script" path="res://weapons/recoil.gd" id="4_rc"]
+[ext_resource type="Script" path="res://weapons/weapon_handling.gd" id="5_wh"]
+[ext_resource type="AudioStream" path="res://weapons/ak47/ak47_shot.wav" id="6_shot"]
+[ext_resource type="AudioStream" path="res://weapons/ak47/ak-reload.wav" id="7_rl"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_col"]
+size = Vector3(0.08, 0.2, 0.9)
+
+[node name="SMG" type="RigidBody3D"]
+freeze = true
+script = ExtResource("1")
+magazine_size = 32
+ammunition = 32
+fire_interval = 0.07
+damage = 18.0
+start_loaded = true
+
+[node name="Body" parent="." instance=ExtResource("2")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0, 0)
+
+[node name="Aim" type="RayCast3D" parent="."]
+target_position = Vector3(0, 0, -50)
+
+[node name="Target_dot" type="MeshInstance3D" parent="Aim"]
+visible = false
+
+[node name="Pivot" type="Node3D" parent="."]
+
+[node name="Casing_spawn_point" type="Marker3D" parent="Pivot"]
+
+[node name="Smoke_spawn_point" type="Marker3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, -0.48)
+
+[node name="Foregrip" type="Marker3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, -0.28)
+
+[node name="Magazine" type="Marker3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, -0.125)
+
+[node name="ChargingHandle" type="Marker3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.03, 0.04, -0.12)
+
+[node name="TwoHanded" type="Node3D" parent="."]
+script = ExtResource("3_th")
+grip_action = "grip_click"
+
+[node name="Recoil" type="Node" parent="."]
+script = ExtResource("4_rc")
+
+[node name="Handling" type="Node" parent="."]
+script = ExtResource("5_wh")
+
+[node name="ShotSound" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, -0.48)
+stream = ExtResource("6_shot")
+max_db = 6.0
+max_polyphony = 4
+
+[node name="ReloadSound" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_rl")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_col")
