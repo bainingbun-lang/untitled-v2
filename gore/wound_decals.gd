@@ -184,7 +184,7 @@ static func _get_layer_color(layer: int) -> Color:
 		DamageLayer.MUSCLE:
 			return Color(0.45, 0.02, 0.02, 0.9)
 		DamageLayer.BONE:
-			return Color(0.35, 0.01, 0.01, 0.95)
+			return Color(0.86, 0.80, 0.68, 0.95)
 	return Color(0.5, 0.03, 0.03, 0.85)
 
 
@@ -516,6 +516,9 @@ static func _get_decal_material_for_layer(layer: int, total_layers: int, depth: 
 		layer_type = DamageLayer.MUSCLE
 	else:
 		layer_type = DamageLayer.BONE
+		# exposed bone: only the innermost layer is bone, outer rings stay muscle
+		if layer < total_layers - 1:
+			layer_type = DamageLayer.MUSCLE
 	material.albedo_color = _get_layer_color(layer_type)
 	material.albedo_texture = _get_decal_texture()
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

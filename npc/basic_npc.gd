@@ -47,6 +47,9 @@ var health: float = DEFAULT_MAX_HEALTH
 var goal: Vector3 = Vector3.ZERO
 
 var collision: CollisionShape3D = null
+const MODELS: Array = ["civil_man_casual", "civil_woman_casual", "office_suit", "police_swat", "soldier_female"]
+var model: Node3D = null
+var _anim: AnimationPlayer = null
 var visual: MeshInstance3D = null
 var head_visual: MeshInstance3D = null
 
@@ -55,6 +58,8 @@ var _home: Vector3 = Vector3.ZERO
 var _last_seen: Vector3 = Vector3.ZERO
 var _action: String = ACTION_IDLE
 var _alert: float = 0.0
+var leg_left_damage: float = 0.0
+var leg_right_damage: float = 0.0
 var _dead: bool = false
 var _built: bool = false
 var _patrol_index: int = -1
@@ -111,32 +116,77 @@ func _build() -> void:
 	collision.position = Vector3(0.0, 0.9, 0.0)
 	add_child(collision)
 
-	_material = StandardMaterial3D.new()
-	_material.albedo_color = _role_color()
-	_material.roughness = 0.85
-	visual = MeshInstance3D.new()
-	visual.name = "Visual"
-	var body := CapsuleMesh.new()
-	body.radius = 0.35
-	body.height = 1.8
-	body.radial_segments = 8
-	body.rings = 4
-	visual.mesh = body
-	visual.material_override = _material
-	visual.position = Vector3(0.0, 0.9, 0.0)
-	add_child(visual)
+	if not _build_model():
+		_material = StandardMaterial3D.new()
+		_material.albedo_color = _role_color()
+		_material.roughness = 0.85
+		visual = MeshInstance3D.new()
+		visual.name = "Visual"
+		var body := CapsuleMesh.new()
+		body.radius = 0.35
+		body.height = 1.8
+		body.radial_segments = 8
+		body.rings = 4
+		visual.mesh = body
+		visual.material_override = _material
+		visual.position = Vector3(0.0, 0.9, 0.0)
+		add_child(visual)
 
-	head_visual = MeshInstance3D.new()
-	head_visual.name = "HeadVisual"
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.22
-	sphere.height = 0.44
-	sphere.radial_segments = 8
-	sphere.rings = 4
-	head_visual.mesh = sphere
-	head_visual.material_override = _material
-	head_visual.position = Vector3(0.0, 1.72, 0.0)
-	add_child(head_visual)
+		head_visual = MeshInstance3D.new()
+		head_visual.name = "HeadVisual"
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.22
+		sphere.height = 0.44
+		sphere.radial_segments = 8
+		sphere.rings = 4
+		head_visual.mesh = sphere
+		head_visual.material_override = _material
+		head_visual.position = Vector3(0.0, 1.72, 0.0)
+		add_child(head_visual)
+
+
+func _build_model() -> bool:
+	var scene = load("res://npc/models/%s.gltf" % MODELS.pick_random())
+	if not scene is PackedScene:
+		return false
+	model = scene.instantiate() as Node3D
+	if model == null:
+		return false
+	model.name = "Model"
+	model.rotation.y = PI
+	add_child(model)
+	_anim = model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_play("Idle", true)
+	return true
+
+
+func _play(anim_name: String, loop: bool = false) -> bool:
+	if _anim == null or not _anim.has_animation(anim_name):
+		return false
+	_anim.get_animation(anim_name).loop_mode = Animation.LOOP_LINEAR if loop else Animation.LOOP_NONE
+	_anim.play(anim_name)
+	return true
+
+
+func _react_hit(point: Vector3, source: Node) -> void:
+	if _play("HitRecieve") or _play("Hit"):
+		_anim.queue("Idle")
+		return
+	var from: Vector3 = point if point.length_squared() > 0.0001 else (source.global_position if source is Node3D else Vector3.ZERO)
+	var away: Vector3 = global_position - from
+	away.y = 0.0
+	if away.length_squared() > 0.0001:
+		global_position += away.normalized() * 0.15
+
+
+func _react_death() -> void:
+	if _play("Death"):
+		return
+	if model != null:
+		create_tween().tween_property(model, "rotation:x", -PI * 0.5, 0.4)
+	for n in [visual, head_visual]:
+		if n != null:
+			n.visible = false
 
 
 func apply_options(p_options: Dictionary) -> void:
@@ -243,9 +293,17 @@ func tick(delta: float) -> Dictionary:
 	return _last_result.duplicate(true)
 
 
-func take_damage(amount: float, point: Vector3 = Vector3.ZERO, source: Node = null) -> void:
+func take_damage(amount: float, point: Vector3 = Vector3.ZERO, source: Node = null, zone: String = "") -> void:
 	if _dead or amount <= 0.0:
 		return
+	var z: String = zone.to_lower()
+	if z == "":
+		leg_left_damage += amount * 0.5
+		leg_right_damage += amount * 0.5
+	elif z.contains("leg") and (z.contains("left") or z.ends_with("_l")):
+		leg_left_damage += amount
+	elif z.contains("leg") and (z.contains("right") or z.ends_with("_r")):
+		leg_right_damage += amount
 	health = maxf(0.0, health - amount)
 	_alert = 1.0
 	if point.length_squared() > 0.0001:
@@ -253,15 +311,14 @@ func take_damage(amount: float, point: Vector3 = Vector3.ZERO, source: Node = nu
 	elif source is Node3D:
 		_last_seen = (source as Node3D).global_position
 	damaged.emit(amount, health)
+	if health > 0.0:
+		_react_hit(point, source)
 	if health <= 0.0:
 		_dead = true
 		velocity = Vector3.ZERO
 		collision_layer = 0
-		if visual != null:
-			visual.visible = false
-		if head_visual != null:
-			head_visual.visible = false
 		set_physics_process(false)
+		_react_death()
 		_set_action(ACTION_DEAD)
 		died.emit(source)
 
@@ -328,15 +385,28 @@ func _move(delta: float) -> void:
 	var offset: Vector3 = goal - global_position
 	offset.y = 0.0
 	var remaining: float = offset.length()
+	var mob: Dictionary = NpcMobility.mobility_for(leg_left_damage, leg_right_damage)
 	var speed: float = patrol_speed
 	if _action == ACTION_CHASE or _action == ACTION_FLEE:
 		speed = run_speed
 	elif _action == ACTION_INVESTIGATE:
 		speed = maxf(patrol_speed, run_speed * 0.5)
-	if remaining > ARRIVE_DISTANCE:
+	speed *= float(mob["speed_factor"])
+	if mob["state"] == "crawl":
+		var away: Vector3 = global_position - (target.global_position if target != null and is_instance_valid(target) else goal)
+		away.y = 0.0
+		if away.length_squared() > 0.0001:
+			away = away.normalized()
+		velocity.x = away.x * NpcMobility.CRAWL_SPEED
+		velocity.z = away.z * NpcMobility.CRAWL_SPEED
+		if not _play("Crawl", true):
+			_play("Idle", true)
+	elif remaining > ARRIVE_DISTANCE:
 		var direction: Vector3 = offset / remaining
 		velocity.x = direction.x * speed
 		velocity.z = direction.z * speed
+		if mob["state"] == "limp":
+			_play("Walk", true)
 		rotation.y = lerp_angle(rotation.y, atan2(-direction.x, -direction.z), clampf(delta * 8.0, 0.0, 1.0))
 	else:
 		velocity.x = 0.0

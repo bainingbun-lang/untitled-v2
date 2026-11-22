@@ -10,6 +10,7 @@ const MAX_WEAPONS := 4
 const SCENES := {
 	"ak47": "res://weapons/ak47.tscn",
 	"pistol": "res://weapons/pistol.tscn",
+	"knife": "res://weapons/knife.tscn",
 }
 
 @export var menu_action := "menu_button"

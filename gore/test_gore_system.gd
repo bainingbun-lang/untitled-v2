@@ -156,6 +156,67 @@ func _run() -> void:
 	_expect(GoreScript.dismember_limb(null, 0, null, Vector3.ZERO, Vector3.UP).is_empty(), "dismember con parent nulo")
 	_expect(DecalsScript.create_puddle(null, Vector3.ZERO, Vector3.UP, 0.2) == null, "charco con parent nulo")
 
+	_case = "capas hueso, chorro y exit wound"
+	GoreScript.clear()
+	GoreScript.apply_gore_level(GoreScript.GoreLevel.NORMAL)
+	var bone_inner: Color = (DecalsScript._get_decal_material_for_layer(1, 2, 0.9) as StandardMaterial3D).albedo_color
+	var bone_outer: Color = (DecalsScript._get_decal_material_for_layer(0, 2, 0.9) as StandardMaterial3D).albedo_color
+	_expect(bone_inner.g > 0.5 and bone_outer.g < 0.1, "hueso expuesto: centro claro, anillo rojo")
+	_expect(DecalsScript.DamageLayer.BONE == 2, "capa BONE existe")
+	var body := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(0.3, 1.0, 1.0)
+	shape.shape = box
+	body.add_child(shape)
+	root.add_child(body)
+	var spray = GoreScript.blood_spray(body, Vector3(0.15, 0, 0), Vector3.RIGHT)
+	_expect(spray is GPUParticles3D and spray.lifetime == 0.3 and spray.one_shot, "blood_spray GPUParticles3D 0.3s")
+	await physics_frame
+	await physics_frame
+	var exit_w: Dictionary = BulletImpact._try_exit_wound(body, Vector3(0.15, 0, 0), Vector3.RIGHT)
+	_expect(not exit_w.is_empty(), "exit wound en cuerpo fino")
+	if not exit_w.is_empty():
+		_expect(absf(exit_w["position"].x + 0.15) < 0.01, "exit wound en lado opuesto")
+	box.size = Vector3(1.0, 1.0, 1.0)
+	await physics_frame
+	await physics_frame
+	_expect(BulletImpact._try_exit_wound(body, Vector3(0.5, 0, 0), Vector3.RIGHT).is_empty(), "sin exit wound en cuerpo grueso")
+	GoreScript.clear()
+	body.free()
+
+	_case = "cuchillo: corte de malla y desmembrado"
+	GoreScript.clear()
+	GoreScript.initialize()
+	var target := Node3D.new()
+	target.add_to_group("sliceable")
+	root.add_child(target)
+	var limb_mesh := MeshInstance3D.new()
+	limb_mesh.mesh = BoxMesh.new()
+	target.add_child(limb_mesh)
+	var piece := GoreScript.slice_mesh_instance(limb_mesh, Vector3.ZERO, Vector3.RIGHT)
+	_expect(is_instance_valid(piece), "slice devuelve pieza suelta")
+	_expect(limb_mesh.mesh.get_aabb().end.x < 0.05, "la malla original queda en el lado -normal")
+	if is_instance_valid(piece):
+		_expect(piece.get_node("MeshInstance3D").mesh.get_aabb().position.x > -0.05, "la pieza queda en el lado +normal")
+	var knife: Node3D = (load("res://weapons/knife.tscn") as PackedScene).instantiate()
+	root.add_child(knife)
+	_expect(knife.cut(target, Vector3.ZERO, Vector3(0.5, 0, 0)).is_empty(), "golpe lento no corta")
+	var npc_skel := Skeleton3D.new()
+	target.add_child(npc_skel)
+	for bone_name in ["Spine", "LeftForeArm", "LeftLeg"]:
+		npc_skel.add_bone(bone_name)
+	npc_skel.set_bone_pose_position(1, Vector3(0.5, 1.2, 0))
+	npc_skel.set_bone_pose_position(2, Vector3(0.1, 0.4, 0))
+	_expect(knife.pick_limb_bone(npc_skel, Vector3(0.45, 1.2, 0)) == 1, "hueso de brazo mas cercano")
+	_expect(knife.pick_limb_bone(npc_skel, Vector3(0, 1.5, 0)) == 1, "ignora columna aunque este cerca")
+	var cut_result: Dictionary = knife.cut(target, Vector3(0.1, 0.4, 0), Vector3(0, 0, -6))
+	_expect(bool(cut_result.get("dismembered", false)), "golpe rapido en pierna desmiembra")
+	_expect(npc_skel.get_bone_pose_scale(2).x < 0.01, "hueso cortado oculto (escala ~0)")
+	knife.free()
+	GoreScript.clear()
+	target.free()
+
 	_case = "cierre"
 	GoreScript.shutdown()
 	_expect(GoreScript.damage_mask_count() == 0, "shutdown limpia mascaras")

@@ -82,6 +82,8 @@ func action() -> void:
 	_play_anim("Fire")
 	ShotFx.fire($Pivot/Smoke_spawn_point)
 	weapon_action.emit("Fire")
+	if has_node("Recoil"):
+		$Recoil.apply()
 	if has_node("Aim"):
 		$Aim.force_raycast_update()
 		if $Aim.is_colliding():

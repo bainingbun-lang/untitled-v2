@@ -6,6 +6,7 @@ class_name GoreSystem
 extends RefCounted
 
 const WoundDecalsScript = preload("res://gore/wound_decals.gd")
+const MeshSlicerScript = preload("res://gore/mesh_slicer/mesh_slicer.gd")
 
 enum GoreLevel { OFF = 0, NORMAL = 1, EXTREME = 2 }
 
@@ -105,6 +106,39 @@ static func create_bullet_wound(parent: Node, pos: Vector3, normal: Vector3, is_
 	return WoundDecalsScript.create_wound(parent, pos, normal, size, depth_layers, zone, npc_id, uv, depth)
 
 
+## Short arterial-style spray at the impact point (0.3 s, few particles).
+static func blood_spray(parent: Node, point: Vector3, normal: Vector3) -> GPUParticles3D:
+	if not gore_enabled() or parent == null or not parent.is_inside_tree():
+		return null
+	if WoundDecalsScript.get_active_particle_limit() <= 0:
+		return null
+	var dir := normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
+	var process := ParticleProcessMaterial.new()
+	process.direction = dir
+	process.spread = 20.0
+	process.initial_velocity_min = 1.5
+	process.initial_velocity_max = 3.0
+	process.gravity = Vector3(0.0, -9.8, 0.0)
+	process.scale_min = 0.25
+	process.scale_max = 0.6
+	var particles := GPUParticles3D.new()
+	particles.name = "BloodSpray"
+	particles.amount = 10 if is_extreme() else 6
+	particles.lifetime = 0.3
+	particles.one_shot = true
+	particles.explosiveness = 0.9
+	particles.process_material = process
+	particles.draw_pass_1 = _get_blood_mesh()
+	particles.material_override = _get_blood_material()
+	particles.finished.connect(particles.queue_free)
+	parent.add_child(particles)
+	particles.global_position = point
+	particles.emitting = true
+	_active_particles.append(particles)
+	_enforce_active_particle_limit()
+	return particles
+
+
 static func create_directional_splatter(parent: Node, pos: Vector3, direction: Vector3, force: float, surface_normal: Vector3 = Vector3.UP) -> void:
 	if not gore_enabled() or parent == null or not parent.is_inside_tree():
 		return
@@ -153,6 +187,10 @@ static func dismember_limb(parent: Node, bone_idx: int, skeleton: Skeleton3D, hi
 				"normal": -safe_normal,
 			})
 
+	# Idea from Dismemberment_Tutorial_Godot4.2 scripts/dismemberment.gd:_remove_bone (MIT, Alenvei): scale the bone ~0 so the skinned limb (and its children) vanish.
+	# shortcut: an AnimationPlayer that keys scale overwrites this; move to a SkeletonModifier3D when NPCs get animated skeletons.
+	skeleton.set_bone_pose_scale(bone_idx, Vector3.ONE * 0.0001)
+
 	var joints: Array = []
 	if is_instance_valid(detached_limb) and detached_limb.has_meta("pin_joints"):
 		joints = detached_limb.get_meta("pin_joints", [])
@@ -166,6 +204,41 @@ static func dismember_limb(parent: Node, bone_idx: int, skeleton: Skeleton3D, hi
 		"bleed_node": bleed_node,
 		"joints": joints,
 	}
+
+
+## Cuts a static (non-skinned) MeshInstance3D along the plane through cut_point with normal cut_normal (world space).
+## The instance keeps the half on the -normal side; the other half becomes a loose RigidBody3D, returned (null on failure).
+static func slice_mesh_instance(mesh_instance: MeshInstance3D, cut_point: Vector3, cut_normal: Vector3) -> RigidBody3D:
+	if not gore_enabled() or mesh_instance == null or not mesh_instance.is_inside_tree() or mesh_instance.mesh == null:
+		return null
+	if cut_normal.length_squared() < 0.0001 or WoundDecalsScript.get_part_limit() <= 0:
+		return null
+	var n := cut_normal.normalized()
+	var up := Vector3.UP if absf(n.dot(Vector3.UP)) < 0.99 else Vector3.RIGHT
+	# MeshSlicer wants the plane normal on +Z of the slice transform, relative to the mesh.
+	var plane := Transform3D(Basis.looking_at(-n, up), cut_point)
+	var halves: Array = MeshSlicerScript.slice_mesh(mesh_instance.global_transform.affine_inverse() * plane, mesh_instance.mesh, _get_stump_cap_material())
+	if halves.size() < 2 or halves[0] == null or halves[1] == null or halves[1].get_faces().size() < 3:
+		return null
+	mesh_instance.mesh = halves[0]
+	var piece := RigidBody3D.new()
+	piece.name = "SlicedPiece"
+	var visual := MeshInstance3D.new()
+	visual.name = "MeshInstance3D"
+	visual.mesh = halves[1]
+	visual.material_override = mesh_instance.material_override
+	piece.add_child(visual)
+	var shape := CollisionShape3D.new()
+	shape.shape = (halves[1] as Mesh).create_convex_shape()
+	piece.add_child(shape)
+	var tree := mesh_instance.get_tree()
+	(tree.current_scene if tree.current_scene else tree.root).add_child(piece)
+	piece.global_transform = mesh_instance.global_transform
+	piece.apply_impulse(n * 1.5, cut_point - piece.global_position)
+	blood_spray(piece, cut_point, n)
+	_part_pool.append(piece)
+	_enforce_part_limit()
+	return piece
 
 
 static func _create_stump_cap(parent: Node, pos: Vector3, normal: Vector3, radius: float) -> MeshInstance3D:
@@ -478,7 +551,7 @@ static func _get_blood_mesh() -> Mesh:
 static func _get_blood_material() -> Material:
 	if _blood_material == null:
 		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.52, 0.015, 0.015, 1.0)
+		material.albedo_color = Color(0.32, 0.01, 0.01, 1.0)
 		material.roughness = 0.88
 		material.metallic = 0.02
 		_blood_material = material
