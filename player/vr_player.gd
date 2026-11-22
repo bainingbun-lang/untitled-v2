@@ -9,6 +9,9 @@ signal bounds_escaped()
 @export var can_move := true
 ## The player's walking speed when using continuous locomotion, in meters per second.
 @export_range(0.1, 5.0, 0.1, "or_greater", "hide_slider") var walk_speed := 1.0
+## Velocidad al correr: se activa manteniendo presionado el botón de caminar (joystick).
+@export var run_multiplier := 2.2
+var _running := false
 ## Multiplier for how hard the player can throw a held [Pickup].
 @export_range(0.0, 2.0, 0.05, "or_greater", "hide_slider") var impulse_multiplier := 0.2
 ## How fast the player falls after walking off a ledge using continuous locomotion.[br]
@@ -69,7 +72,7 @@ func _physics_process(delta: float) -> void:
 		if locomotion_update_mode == Settings.LocomotionUpdateMode.CONTINUOUS:
 			_update_locomotion_direction()
 		var movement := _walking_input.rotated(-_locomotion_direction)
-		_body.velocity = Vector3(movement.x, -fall_speed, movement.y) * walk_speed
+		_body.velocity = Vector3(movement.x, -fall_speed, movement.y) * walk_speed * (run_multiplier if _running else 1.0)
 		_body.move_and_slide()
 	elif not _body.is_on_floor():
 		_body.velocity = Vector3.DOWN * fall_speed
@@ -271,10 +274,12 @@ func _on_controller_button_pressed(
 		else:
 			assert(hand == XRPositionalTracker.TRACKER_HAND_RIGHT)
 			_on_teleport_right_action_pressed()
-	elif name == &"walk" and _walk_require_press:
-		_walking = continuous_locomotion_enabled
-		if _walking:
-			_update_locomotion_direction()
+	elif name == &"walk":
+		_running = true
+		if _walk_require_press:
+			_walking = continuous_locomotion_enabled
+			if _walking:
+				_update_locomotion_direction()
 	elif name == &"turn" and _turn_require_press:
 		if not smooth_turning and not _turning and not is_zero_approx(_turning_input):
 			snap_turn(PI / 4.0 if _turning_input > 0.0 else -PI / 4.0)
@@ -298,6 +303,7 @@ func _on_controller_button_released(
 			assert(hand == XRPositionalTracker.TRACKER_HAND_RIGHT)
 			_on_teleport_right_action_released()
 	elif name == &"walk":
+		_running = false
 		_walking = false
 	elif name == &"turn" and _turn_require_press:
 		_turning = false
