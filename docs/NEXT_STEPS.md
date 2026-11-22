@@ -46,6 +46,9 @@ Versión estable con menú principal (Jugar, Mods, Configuración) y un sistema 
 - Zombis: se acercan al jugador dentro de 14 m (configurable en Configuración).
 - Población: casa 4, escuela hasta 60, oficina 37 (modelo a escala x3).
 - Sonido: sonidos reales del proyecto para disparos de NPC; grito e impacto generados en código.
+- Correr: mantener presionado el botón de caminar (x2.2).
+- Agarrar un NPC armado lo desarma.
+- Bolsillo derecho configurable, subfusil, pruebas de combate (`tests/test_combat.gd`) incluidas en `tests/run_all.sh`.
 
 ### Pendiente / no verificado
 - Tácticas (rodear, quitar arma a policías): no implementado.
