@@ -165,6 +165,11 @@ static func blood_drip(parent: Node, point: Vector3) -> GPUParticles3D:
 	particles.global_position = point
 	particles.emitting = true
 	parent.get_tree().create_timer(2.5).timeout.connect(particles.queue_free)
+	# Shortcut: el charco cae a una altura fija de piso de la casa (0.53 m), no por raycast; subir si hay otros pisos.
+	var floor_pos := Vector3(point.x, 0.53, point.z)
+	parent.get_tree().create_timer(0.9).timeout.connect(func() -> void:
+		if is_instance_valid(parent) and parent.is_inside_tree():
+			create_puddle(parent, floor_pos, Vector3.UP, 0.22))
 	_active_particles.append(particles)
 	_enforce_active_particle_limit()
 	return particles
@@ -380,17 +385,17 @@ static func _create_stump_bleed(parent: Node, pos: Vector3, normal: Vector3) -> 
 	anchor.global_position = pos
 
 	var particles := CPUParticles3D.new()
-	particles.amount = 12
-	particles.lifetime = 0.6
+	particles.amount = 40
+	particles.lifetime = 0.9
 	particles.one_shot = false
 	particles.emitting = true
 	particles.direction = normal
 	particles.spread = 15.0
-	particles.initial_velocity_min = 0.5
-	particles.initial_velocity_max = 2.0
+	particles.initial_velocity_min = 0.8
+	particles.initial_velocity_max = 2.5
 	particles.gravity = Vector3(0.0, -6.0, 0.0)
-	particles.scale_amount_min = 0.015
-	particles.scale_amount_max = 0.04
+	particles.scale_amount_min = 0.8
+	particles.scale_amount_max = 1.6
 	particles.mesh = _get_blood_mesh()
 	particles.material_override = _get_blood_material()
 	anchor.add_child(particles)

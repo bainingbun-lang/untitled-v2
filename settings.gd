@@ -177,3 +177,9 @@ func apply_to_player(player: VRPlayer) -> void:
 	player.locomotion_direction_source = self.locomotion_direction_source
 	player.locomotion_update_mode = self.locomotion_update_mode
 	player.smooth_turning = self.smooth_turning
+
+
+func _ready() -> void:
+	# Sonido apagado en builds de depuración y pruebas; se oye en release. UNTITLED_MUTE=1 fuerza silencio.
+	if OS.is_debug_build() or OS.get_environment("UNTITLED_MUTE") == "1":
+		AudioServer.set_bus_mute(0, true)

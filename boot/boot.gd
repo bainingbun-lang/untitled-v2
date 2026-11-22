@@ -50,6 +50,9 @@ func _initialize_xr():
 	print("Boot: XR initialized successfully, loading demo_room")
 	
 	GameConfig.load_config()
+	# Sonido apagado en builds de depuración (pruebas); se oye en builds de release. UNTITLED_MUTE=1 fuerza silencio.
+	if OS.is_debug_build() or OS.get_environment("UNTITLED_MUTE") == "1":
+		AudioServer.set_bus_mute(0, true)
 	var mounted = ModPacks.mount_all()
 	RemoteLog.crumb("BOOT: mods montados %d" % mounted.size())
 	RemoteLog.crumb("BOOT: before change_scene")

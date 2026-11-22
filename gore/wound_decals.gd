@@ -297,12 +297,12 @@ static func create_splatter(parent: Node, pos: Vector3, direction: Vector3, spre
 static func _add_surface_decal(parent: Node, pos: Vector3, normal: Vector3, size: float, decal_type: String) -> void:
 	if parent == null or not parent.is_inside_tree() or _decal_limit <= 0:
 		return
-	var decal := MeshInstance3D.new()
+	# Decal proyectado sobre la superficie real (no un plano flotante), con textura de salpicadura.
+	var decal := Decal.new()
 	decal.name = "SurfaceDecal_%s" % decal_type
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(size, size)
-	decal.mesh = plane
-	decal.material_override = _get_surface_decal_material(decal_type)
+	decal.texture_albedo = _get_splat_texture()
+	decal.modulate = Color(0.45, 0.02, 0.02, 0.9)
+	decal.size = Vector3(size, 0.3, size)
 
 	var surface := _raycast_ground(parent, pos + Vector3.UP * 0.3)
 	var impact_pos: Vector3 = surface.get("position", pos)
@@ -312,8 +312,9 @@ static func _add_surface_decal(parent: Node, pos: Vector3, normal: Vector3, size
 		impact_normal = normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
 
 	parent.add_child(decal)
-	decal.global_position = impact_pos + impact_normal * 0.006
-	decal.global_rotation = Quaternion(Vector3.UP, impact_normal).get_euler()
+	var basis := Basis(Quaternion(Vector3.UP, impact_normal.normalized()))
+	basis = basis * Basis(Vector3.UP, randf() * TAU)
+	decal.global_transform = Transform3D(basis, impact_pos + impact_normal * 0.05)
 
 	_surface_decals.append({
 		"root": decal,
