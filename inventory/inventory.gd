@@ -23,6 +23,7 @@ const SCENES := {
 	"hacha": "res://weapons/hacha.tscn",
 	"katana": "res://weapons/katana.tscn",
 	"bate": "res://weapons/bate.tscn",
+	"francotirador": "res://weapons/francotirador.tscn",
 }
 
 @export var menu_action := "menu_button"
