@@ -2,6 +2,7 @@ class_name BasicNpc
 extends CharacterBody3D
 const GameConfig = preload("res://storage/game_config.gd")
 const Sfx = preload("res://audio/sfx.gd")
+const GoreSystem = preload("res://gore/gore_system.gd")
 const SHOT_SOUND_PATH := "res://weapons/ak47/ak47_shot.wav"
 
 signal action_changed(action: String)
@@ -356,6 +357,8 @@ func take_damage(amount: float, point: Vector3 = Vector3.ZERO, source: Node = nu
 		set_physics_process(false)
 		_react_death()
 		_set_action(ACTION_DEAD)
+		# Charco bajo el cuerpo al morir (shortcut: altura de piso fija de la casa, 0.53 m).
+		GoreSystem.create_puddle(get_parent(), Vector3(global_position.x, 0.53, global_position.z), Vector3.UP, 0.4)
 		died.emit(source)
 
 
