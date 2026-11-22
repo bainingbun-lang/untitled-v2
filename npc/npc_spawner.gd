@@ -31,36 +31,38 @@ static func count_for_area(area_m2: float) -> int:
 	return clampi(int(round(area_m2 * GameConfig.density_per_m2())), 2, 60)
 
 
-## Puntos de piso dentro de un rectángulo, con raycast hacia abajo. Debe llamarse en un frame de física.
+## Puntos de piso dentro de un rectángulo: muestreo aleatorio con raycast hacia abajo.
+## Debe llamarse en un frame de física. Intenta hasta 40 veces por punto pedido.
 static func floor_points(space: PhysicsDirectSpaceState3D, min_xz: Vector2, max_xz: Vector2, want: int, exclude: Array) -> Array:
 	var out: Array = []
-	var side := maxf(0.6, sqrt(maxf(0.01, (max_xz.x - min_xz.x) * (max_xz.y - min_xz.y) / float(maxi(want, 1)))))
-	var x := min_xz.x + side * 0.5
-	var guard := 0
-	while x < max_xz.x and out.size() < want and guard < 5000:
-		var z := min_xz.y + side * 0.5
-		while z < max_xz.y and out.size() < want and guard < 5000:
-			guard += 1
-			var p_top := Vector3(x, 12.0, z)
-			# Desde arriba: si la primera superficie es un techo o un piso alto, se sigue bajando.
-			for _step in 8:
-				var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(p_top, Vector3(x, -2.0, z)))
-				if hit.is_empty():
-					break
-				if hit.normal.y > 0.7 and hit.position.y > -0.2 and hit.position.y < 1.0:
-					var p: Vector3 = hit.position + Vector3.UP * 0.5
-					if not _too_close(p, exclude):
-						out.append(p)
-					break
-				p_top = hit.position - Vector3.UP * 0.05
-			z += side
-		x += side
+	var attempts := want * 40
+	for _a in attempts:
+		if out.size() >= want:
+			break
+		var x := randf_range(min_xz.x, max_xz.x)
+		var z := randf_range(min_xz.y, max_xz.y)
+		var p: Variant = _floor_at(space, x, z)
+		if p != null and not _too_close(p, out) and not _too_close(p, exclude):
+			out.append(p)
 	return out
+
+
+## Superficie de piso bajo (x, z): baja desde arriba saltando techos. null si no hay piso.
+static func _floor_at(space: PhysicsDirectSpaceState3D, x: float, z: float):
+	var p_top := Vector3(x, 12.0, z)
+	for _step in 8:
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(p_top, Vector3(x, -2.0, z)))
+		if hit.is_empty():
+			return null
+		if hit.normal.y > 0.7 and hit.position.y > -0.2 and hit.position.y < 1.0:
+			return hit.position + Vector3.UP * 0.5
+		p_top = hit.position - Vector3.UP * 0.05
+	return null
 
 
 static func _too_close(p: Vector3, others: Array) -> bool:
 	for o in others:
-		if p.distance_to(o) < 0.8:
+		if p.distance_to(o) < 0.7:
 			return true
 	return false
 
