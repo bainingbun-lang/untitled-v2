@@ -98,6 +98,9 @@ func _update_npc_grab() -> void:
 			if body.has_method("take_damage") and body is Node3D:
 				_grabbed_npc = body
 				_grab_offset = (body as Node3D).global_position - global_position
+				# Quitar el arma: un NPC armado que agarras queda desarmado.
+				if body.get("armed") == true:
+					body.set("armed", false)
 				break
 		return
 	if not is_instance_valid(_grabbed_npc):
