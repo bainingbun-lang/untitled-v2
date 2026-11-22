@@ -149,18 +149,25 @@ func _equip_weapon() -> void:
 	origin.add_child(holster)
 	holster.position = Vector3(0.25, 0.8, 0.0)
 	_weapon_pickable.global_position = holster.global_position
-	holster.drawn.connect(func() -> void:
-		if _weapon_hand.weapon_id.is_empty():
-			_weapon_pickable.call("pick_up", controller, controller)
-			_on_weapon_picked_up(_weapon_pickable))
 
 	if left != null:
 		var inventory := InventoryScript.new()
 		inventory.name = "Inventory"
 		add_child(inventory)
 		inventory.setup(controller, left)
+		inventory.changed.connect(func() -> void:
+			var th: Node = inventory.right.weapon.get_node_or_null("TwoHanded") if is_instance_valid(inventory.right.weapon) else null
+			if th:
+				th.off_hand = left)
 		inventory.add("pistol")
 		inventory.hold_existing(inventory.right, "ak47", _weapon_pickable)
+		holster.drawn.connect(func() -> void:
+			if inventory.right.id.is_empty():
+				inventory.equip_right("ak47"))
+		controller.button_released.connect(func(action: String) -> void:
+			if action == "grip_click" and inventory.right.id == "ak47" \
+					and controller.global_position.distance_to(holster.global_position) < holster.radius:
+				inventory.stow(inventory.right))
 
 	_weapon_ok = true
 	print("Sandbox: AK47 en funda, grip en la funda para sacarla")

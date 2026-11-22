@@ -42,8 +42,8 @@ func release() -> String:
 
 
 func magazine_position() -> Vector3:
-	# Magazine sits at the weapon's center.
-	return weapon.global_position
+	var mag := weapon.get_node_or_null("Pivot/Magazine") as Node3D
+	return mag.global_position if mag else weapon.global_position
 
 
 func touches_magazine(hand: XRController3D) -> bool:

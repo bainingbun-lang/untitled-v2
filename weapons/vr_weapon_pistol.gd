@@ -80,7 +80,6 @@ func action() -> void:
 		return
 	set_ammunition(reload.total_rounds())
 	_play_anim("Fire")
-	_emit_smoke()
 	ShotFx.fire($Pivot/Smoke_spawn_point)
 	weapon_action.emit("Fire")
 	if has_node("Aim"):

@@ -26,6 +26,10 @@ visible = false
 [node name="Smoke_spawn_point" type="Marker3D" parent="Pivot"]
 
 [node name="Foregrip" type="Marker3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.28, -0.02, 0)
+
+[node name="Magazine" type="Marker3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.125, -0.08, 0)
 
 [node name="TwoHanded" type="Node3D" parent="."]
 script = ExtResource("3_th")
