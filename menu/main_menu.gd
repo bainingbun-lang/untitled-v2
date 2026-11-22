@@ -96,7 +96,10 @@ func _show_mods() -> void:
 func _show_settings() -> void:
 	_clear()
 	var gore_row := HBoxContainer.new()
-	gore_row.add_child(_label("Gore"))
+	var gore_lbl := _label("Gore")
+	gore_lbl.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	gore_lbl.custom_minimum_size = Vector2(160, 0)
+	gore_row.add_child(gore_lbl)
 	var gore := OptionButton.new()
 	for i in GORE_LEVELS.size():
 		gore.add_item(GORE_LEVELS[i], i)
@@ -106,7 +109,10 @@ func _show_settings() -> void:
 	_content.add_child(gore_row)
 
 	var diff_row := HBoxContainer.new()
-	diff_row.add_child(_label("Dificultad"))
+	var diff_lbl := _label("Dificultad")
+	diff_lbl.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	diff_lbl.custom_minimum_size = Vector2(160, 0)
+	diff_row.add_child(diff_lbl)
 	var diff := OptionButton.new()
 	var selected := 1
 	for i in DIFFICULTIES.size():
@@ -156,4 +162,5 @@ func _label(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return l
