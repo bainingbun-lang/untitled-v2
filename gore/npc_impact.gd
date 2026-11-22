@@ -7,6 +7,7 @@ extends RefCounted
 ##   >= 10 : herida grande (la zona se abre), rociada y goteo.
 const GoreSystem = preload("res://gore/gore_system.gd")
 const WOUND_MIN_SPEED := 4.0
+const Sfx = preload("res://audio/sfx.gd")
 const OPEN_WOUND_SPEED := 10.0
 
 
@@ -14,6 +15,7 @@ static func apply(npc: Node, point: Vector3, normal: Vector3, speed: float, zone
 	if npc == null or not npc.has_method("take_damage") or speed <= 0.0:
 		return {}
 	var damage := clampf(speed * 3.0, 0.0, 200.0)
+	Sfx.play_at(npc, Sfx.impact(), point)
 	npc.take_damage(damage, point, null, zone)
 	var wounded := speed >= WOUND_MIN_SPEED
 	if wounded:

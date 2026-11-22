@@ -4,12 +4,13 @@ extends Node
 ## Reacciones de los NPC de un mapa:
 ##  - Al recibir daño grita "¡REFUERZOS!" y llama un refuerzo armado (máximo REINFORCEMENTS por mapa).
 ##  - Si el jugador se acerca por detrás (menos de 3 m, fuera de su vista frontal), dice "¿Quién anda ahí?".
-## Sin audio: el grito es un texto sobre la cabeza.
+## El grito tiene sonido generado (audio/sfx.gd) y texto sobre la cabeza.
 
 const NpcSpawner = preload("res://npc/npc_spawner.gd")
 const REINFORCEMENTS := 3
 const BEHIND_RANGE := 3.0
 const SHOUT_TIME := 2.0
+const Sfx = preload("res://audio/sfx.gd")
 ## Tiempo tras aparecer en el que los daños (caídas al piso, choques) no provocan reacciones.
 const GRACE_TIME := 3.0
 
@@ -71,6 +72,7 @@ func _shout(npc: Node, text: String) -> void:
 	if not (npc is Node3D) or not npc.is_inside_tree():
 		return
 	var n := npc as Node3D
+	Sfx.play_at(n, Sfx.shout(), n.global_position)
 	var old := n.get_node_or_null("Shout")
 	if old != null:
 		old.queue_free()
