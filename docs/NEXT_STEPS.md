@@ -64,3 +64,10 @@ Versión estable con menú principal (Jugar, Mods, Configuración) y un sistema 
 - Gore: rastro de sangre al piso desde heridas abiertas y decapitaciones.
 - Modelo 3D pendiente: `godot-xr-tools/assets/3dmodelscc0/models/sniper_rifle/sniper_rifle.glb` (sitio 3dmodelscc0, que es CC0; el archivo de licencia no lo dice explícitamente, confirmar). Falta importarlo en Godot (`--import` falla aquí con segfault) y poner el cuerpo en el sniper.
 - Pendiente: más modelos de armas descargados, gore con partes del cuerpo que salgan volando, tácticas de NPC.
+
+### Cierre de la pasada (arsenal, modelo CC0 y gore)
+- Armas nuevas: revólver, fusil, PDW, tanto, hacha, katana, bate (cuerpo a cuerpo sin desmembrar), francotirador con modelo CC0 de 3dmodelscc0.
+- Modelo CC0 del francotirador importado en `weapons/models/sniper_cc0/` (licencia en `License.txt`: confirmar que sea CC0 en el sitio de origen).
+- Gore: charcos al morir y bajo cabezas cortadas; rastro de sangre al piso.
+- Pruebas: `bash tests/run_all.sh` (mods, armas, arsenal, combate). Todas pasan. Smoke de todas las escenas principales sin errores de script.
+- Limitaciones: el bate usa la lógica de corte del cuchillo (sin desmembrar). Los charcos usan altura de piso fija (0.53 m), no raycast.
