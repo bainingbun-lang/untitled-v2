@@ -69,6 +69,24 @@ func _place_panel() -> void:
 	_placed = true
 
 
+## El panel sigue a la cabeza: siempre a 2 m al frente y a la altura de los ojos, mirando al jugador.
+func _follow_head() -> void:
+	if _head == null:
+		return
+	var eye := _head.global_position
+	var fwd := -_head.global_basis.z
+	fwd.y = 0.0
+	if fwd.length_squared() < 0.0001:
+		return
+	fwd = fwd.normalized()
+	var target := eye + fwd * 2.0
+	target.y = eye.y
+	_panel.global_position = _panel.global_position.lerp(target, 0.15) if _placed else target
+	_panel.look_at(eye, Vector3.UP)
+	_panel.rotate_y(PI)
+	_placed = true
+
+
 ## Línea visible desde el mando hasta el panel, para apuntar.
 func _add_laser(c: XRController3D) -> void:
 	var mesh := CylinderMesh.new()
@@ -99,7 +117,7 @@ func _update_laser(c: XRController3D, hit: Dictionary) -> void:
 
 
 func _process(_delta: float) -> void:
-	_place_panel()
+	_follow_head()
 	for c in _controllers:
 		var hit := _ray_panel(c)
 		_update_laser(c, hit)
