@@ -11,6 +11,10 @@ extends VrWeaponBase
 @export var magazine_size: int = 12
 @export var ammunition: int = 12
 @export var damage: float = 34.0
+## Perdigones por disparo (escopeta > 1). Cada uno aplica `damage` en su propio rayo.
+@export var pellets: int = 1
+## Dispersión de los perdigones en grados.
+@export var pellet_spread_deg: float = 6.0
 ## From godot_weapon_manager (MIT, Colormatic): rate-of-fire gate and finite spare magazines (-1 = infinite).
 @export var fire_interval: float = 0.0
 @export var spare_magazines: int = -1
@@ -120,7 +124,9 @@ func action() -> void:
 	weapon_action.emit("Fire")
 	if has_node("Recoil"):
 		$Recoil.apply()
-	if has_node("Aim"):
+	if pellets > 1 and has_node("Aim"):
+		_fire_pellets()
+	elif has_node("Aim"):
 		$Aim.force_raycast_update()
 		if $Aim.is_colliding():
 			BulletImpact.apply($Aim.get_collider(), $Aim.get_collision_point(), $Aim.get_collision_normal(), damage, self)
@@ -169,3 +175,21 @@ func _on_Gun_load_point_body_entered(body: Node3D) -> void:
 	## Magazine body touching the load point counts as insertion
 	if insert_magazine():
 		body.call("drop_and_free")
+
+
+## Escopeta: varios rayos dispersos desde el cañón, cada uno con su propio impacto y herida.
+func _fire_pellets() -> void:
+	var aim: RayCast3D = $Aim
+	var origin := aim.global_position
+	var forward := -aim.global_basis.z
+	var space := get_world_3d().direct_space_state
+	var spread := deg_to_rad(pellet_spread_deg)
+	for i in pellets:
+		var yaw := randf_range(-spread, spread)
+		var pitch := randf_range(-spread, spread)
+		var dir := forward.rotated(aim.global_basis.y, yaw).rotated(aim.global_basis.x, pitch).normalized()
+		var q := PhysicsRayQueryParameters3D.create(origin, origin + dir * 60.0)
+		q.exclude = [get_rid()]
+		var hit := space.intersect_ray(q)
+		if not hit.is_empty():
+			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], damage, self)
