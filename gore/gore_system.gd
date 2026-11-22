@@ -119,8 +119,8 @@ static func blood_spray(parent: Node, point: Vector3, normal: Vector3) -> GPUPar
 	process.initial_velocity_min = 2.5
 	process.initial_velocity_max = 5.0
 	process.gravity = Vector3(0.0, -9.8, 0.0)
-	process.scale_min = 0.25
-	process.scale_max = 0.6
+	process.scale_min = 0.5
+	process.scale_max = 1.0
 	var particles := GPUParticles3D.new()
 	particles.name = "BloodSpray"
 	particles.amount = 22 if is_extreme() else 14

@@ -289,9 +289,9 @@ static func create_splatter(parent: Node, pos: Vector3, direction: Vector3, spre
 			var hit_normal: Vector3 = hit.get("normal", Vector3.UP)
 			if hit_normal.length_squared() > 0.0001:
 				hit_normal = hit_normal.normalized()
-			_add_surface_decal(parent, hit_pos, hit_normal, clampf(0.04 + force * 0.0008, 0.04, 0.18), "splatter")
+			_add_surface_decal(parent, hit_pos, hit_normal, clampf(0.08 + force * 0.0015, 0.08, 0.30), "splatter")
 		else:
-			_add_surface_decal(parent, ray_to, Vector3.UP, clampf(0.03 + force * 0.0005, 0.03, 0.12), "splatter_air")
+			_add_surface_decal(parent, ray_to, Vector3.UP, clampf(0.06 + force * 0.0010, 0.06, 0.20), "splatter_air")
 
 
 static func _add_surface_decal(parent: Node, pos: Vector3, normal: Vector3, size: float, decal_type: String) -> void:

@@ -74,7 +74,7 @@ static func _build_floor(root: Node3D, bounds: AABB, material: StandardMaterial3
 	box.size = shape.size
 	mesh_instance.mesh = box
 	mesh_instance.material_override = material
-	mesh_instance.visible = false
+	mesh_instance.visible = true
 	body.add_child(mesh_instance)
 	body.position = Vector3(
 		bounds.position.x + bounds.size.x * 0.5,
@@ -132,7 +132,7 @@ static func _static_box(
 	box.size = size
 	mesh_instance.mesh = box
 	mesh_instance.material_override = material
-	mesh_instance.visible = false
+	mesh_instance.visible = true
 	body.add_child(mesh_instance)
 	body.position = center
 	root.add_child(body)

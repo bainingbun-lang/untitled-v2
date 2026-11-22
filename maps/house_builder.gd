@@ -70,7 +70,7 @@ static func _build_floor(root: Node3D, x: float, y: float, z: float, width: floa
 	box.size = shape.size
 	mesh_instance.mesh = box
 	mesh_instance.material_override = material
-	mesh_instance.visible = false
+	mesh_instance.visible = true
 	body.add_child(mesh_instance)
 	body.position = Vector3(x + width * 0.5, y + FLOOR_THICKNESS * 0.5, z + depth * 0.5)
 	root.add_child(body)
@@ -92,7 +92,7 @@ static func _build_ceiling(root: Node3D, x: float, y: float, z: float, width: fl
 	box.size = shape.size
 	mesh_instance.mesh = box
 	mesh_instance.material_override = material
-	mesh_instance.visible = false
+	mesh_instance.visible = true
 	body.add_child(mesh_instance)
 	body.position = Vector3(x + width * 0.5, y + FLOOR_THICKNESS * 0.5, z + depth * 0.5)
 	root.add_child(body)
@@ -151,7 +151,7 @@ static func _build_stairs(root: Node3D, x: float, y: float, z: float, material: 
 		box.size = shape.size
 		mesh_instance.mesh = box
 		mesh_instance.material_override = material
-		mesh_instance.visible = false
+		mesh_instance.visible = true
 		body.add_child(mesh_instance)
 		body.position = Vector3(
 			stair_x + STAIR_WIDTH * 0.5,
@@ -180,7 +180,7 @@ static func _static_box(
 	box.size = size
 	mesh_instance.mesh = box
 	mesh_instance.material_override = material
-	mesh_instance.visible = false
+	mesh_instance.visible = true
 	body.add_child(mesh_instance)
 	body.position = center
 	root.add_child(body)
