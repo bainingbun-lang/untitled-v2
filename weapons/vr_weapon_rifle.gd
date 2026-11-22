@@ -45,7 +45,7 @@ func action() -> void:
 	if can_shoot and bullet_scene:
 		## Shoot our bullet
 		var new_bullet = bullet_scene.instantiate()
-		get_node("/root/Main/Viewport-VR/Spawns").add_child(new_bullet)
+		_spawn_parent().add_child(new_bullet)
 		
 		var new_transform: Transform3D = $Pivot/Muzzle.global_transform
 		new_bullet.linear_velocity = -new_transform.basis.z * initial_bullet_speed
@@ -73,3 +73,10 @@ func _process(delta: float) -> void:
 
 func _on_cooldown_timeout() -> void:
 	can_shoot = true
+
+
+func _spawn_parent() -> Node:
+	var spawns := get_tree().root.get_node_or_null("Main/Viewport-VR/Spawns")
+	if spawns != null:
+		return spawns
+	return get_tree().current_scene if get_tree().current_scene != null else get_tree().root

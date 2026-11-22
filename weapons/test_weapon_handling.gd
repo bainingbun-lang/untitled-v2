@@ -18,7 +18,8 @@ func _initialize() -> void:
 	current_scene = scene
 	var ak = load("res://weapons/ak47.tscn").instantiate()
 	scene.add_child(ak)
-	await physics_frame
+	for _i in 3:
+		await physics_frame  # el arma marca physics_ready en su primer frame de física
 	var actions: Array = []
 	ak.weapon_action.connect(func(a): actions.append(a))
 	ak.draw()

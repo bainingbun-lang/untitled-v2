@@ -162,14 +162,14 @@ func _emit_casing() -> void:
 		new_casing.transform = $Pivot/Casing_spawn_point.global_transform
 		new_casing.linear_velocity = new_casing.transform.basis.x * initial_casing_velocity
 
-		get_node("/root/Main/Viewport-VR/Spawns").add_child(new_casing)
+		_spawn_parent().add_child(new_casing)
 
 func _emit_smoke() -> void:
 	if smoke_scene:
 		var new_smoke = smoke_scene.instantiate()
 		new_smoke.transform = $Pivot/Smoke_spawn_point.global_transform
 
-		get_node("/root/Main/Viewport-VR/Spawns").add_child(new_smoke)
+		_spawn_parent().add_child(new_smoke)
 
 func _on_Gun_load_point_body_entered(body: Node3D) -> void:
 	## Magazine body touching the load point counts as insertion
@@ -193,3 +193,11 @@ func _fire_pellets() -> void:
 		var hit := space.intersect_ray(q)
 		if not hit.is_empty():
 			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], damage, self)
+
+
+## Contenedor de proyectiles y efectos: el nodo Spawns de la escena principal, o la escena actual si no existe.
+func _spawn_parent() -> Node:
+	var spawns := get_tree().root.get_node_or_null("Main/Viewport-VR/Spawns")
+	if spawns != null:
+		return spawns
+	return get_tree().current_scene if get_tree().current_scene != null else get_tree().root
