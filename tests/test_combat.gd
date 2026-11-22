@@ -17,6 +17,8 @@ func _init() -> void:
 	_expect(npc != null, "hay un NPC en la sandbox")
 	if npc != null:
 		await _shotgun_pellets(sb, npc)
+		npc.health = npc.max_health  # el NPC del perdigonazo queda herido; el francotirador necesita uno sano
+		await _rifle_shot(sb, npc)
 		_headshot(sb)
 	print("RESULTADO: %s (%d fallos)" % ["OK" if _fails == 0 else "FALLO", _fails])
 	quit(0 if _fails == 0 else 1)
@@ -65,6 +67,42 @@ func _shotgun_pellets(sb: Node, npc: Node3D) -> void:
 		await physics_frame
 	_expect(hp0 - npc.health >= 90.0, "8 perdigones de 12 aciertan al NPC (daño %.0f)" % (hp0 - npc.health))
 	sg.queue_free()
+
+
+func _rifle_shot(sb: Node, npc: Node3D) -> void:
+	var sn = load("res://weapons/francotirador.tscn").instantiate()
+	sb.add_child(sn)
+	for i in 2:
+		await physics_frame
+	var target: Vector3 = npc.global_position + Vector3(0, 1.0, 0)
+	var space = sb.get_world_3d().direct_space_state
+	var spot := Vector3.ZERO
+	var found := false
+	for k in 36:
+		var a := TAU * k / 36.0
+		var cand: Vector3 = target + Vector3(cos(a), 0, sin(a)) * 6.0
+		var h = space.intersect_ray(PhysicsRayQueryParameters3D.create(cand, target))
+		if not h.is_empty() and h.collider == npc:
+			spot = cand
+			found = true
+			break
+	_expect(found, "hay línea de tiro para el francotirador")
+	if found:
+		sn.global_position = spot
+		sn.look_at(target, Vector3.UP)
+		for i in 2:
+			await physics_frame
+		var hp0: float = npc.health
+		sn.physics_ready = true
+		sn.drawn = true
+		sn.reload.insert_magazine()
+		sn.reload.rack_slide()
+		sn._next_fire_ms = 0
+		sn.action()
+		for i in 10:
+			await physics_frame
+		_expect(hp0 - npc.health >= 90.0, "francotirador hace 95 de daño (bajó %.0f)" % (hp0 - npc.health))
+	sn.queue_free()
 
 
 func _headshot(sb: Node) -> void:
