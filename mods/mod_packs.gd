@@ -4,11 +4,14 @@ extends RefCounted
 ## Mods como ZIP. Un mod es un .zip con mod.json en la raíz y los archivos en la misma
 ## estructura que res:// (scripts, escenas, texturas, audio, datos...). Al montarlo, Godot
 ## sobrescribe esos archivos, así que un mod puede cambiar cualquier cosa del juego.
-## Límite: un script que ya estaba cargado no se cambia hasta reiniciar.
+## Límites: un script ya cargado no cambia hasta reiniciar. Los mods desactivados no se montan.
 
 const ModLoaderScript = preload("res://mods/mod_loader.gd")
 const AppPaths = preload("res://storage/app_paths.gd")
 const MANIFEST := "mod.json"
+const STATE_FILE := "mods_state.json"
+## Áreas que un mod declara que toca. Informativo: se muestra en la lista de mods.
+const PERMISSIONS := ["gore", "sandbox", "maps", "npc", "weapons", "textures", "audio", "scripts", "data"]
 
 
 ## Valida un ZIP y lo copia a la carpeta de mods. Devuelve {ok, errors, id, path}.
@@ -30,6 +33,9 @@ static func import_zip(zip_path: String) -> Dictionary:
 		var parsed: Dictionary = ModLoaderScript.new().validate(manifest)
 		if not parsed.get("ok", false):
 			errors.append_array(parsed.get("errors", []))
+		for p in manifest.get("permissions", []):
+			if not PERMISSIONS.has(str(p)):
+				errors.append("permiso desconocido: " + str(p))
 	zr.close()
 	if not errors.is_empty():
 		return _fail(errors)
@@ -40,24 +46,25 @@ static func import_zip(zip_path: String) -> Dictionary:
 	return {"ok": true, "errors": [], "id": id, "path": dest}
 
 
-## Monta todos los ZIP de la carpeta de mods. Llamar antes de cargar la escena principal.
+## Monta todos los ZIP activos de la carpeta de mods. Llamar antes de cargar la escena principal.
 static func mount_all() -> Array:
 	var mounted: Array = []
+	var off := disabled_files()
 	var dir := DirAccess.open(AppPaths.mods_dir())
 	if dir == null:
 		return mounted
 	for f in dir.get_files():
-		if str(f).get_extension() != "zip":
+		if str(f).get_extension() != "zip" or off.has(str(f)):
 			continue
-		var path := AppPaths.mods_dir().path_join(str(f))
-		if ProjectSettings.load_resource_pack(path, true):
+		if ProjectSettings.load_resource_pack(AppPaths.mods_dir().path_join(str(f)), true):
 			mounted.append(str(f))
 	return mounted
 
 
-## Lista los mods instalados con su manifiesto, para la pantalla Mods.
+## Lista los mods instalados con su manifiesto y estado, para la pantalla Mods.
 static func list_installed() -> Array:
 	var out: Array = []
+	var off := disabled_files()
 	var dir := DirAccess.open(AppPaths.mods_dir())
 	if dir == null:
 		return out
@@ -69,13 +76,44 @@ static func list_installed() -> Array:
 			continue
 		var m := _read_manifest(zr)
 		zr.close()
-		out.append({"file": str(f), "id": m.get("id", ""), "name": m.get("name", str(f)), "version": m.get("version", "")})
+		out.append({
+			"file": str(f),
+			"id": m.get("id", ""),
+			"name": m.get("name", str(f)),
+			"version": m.get("version", ""),
+			"permissions": m.get("permissions", []),
+			"enabled": not off.has(str(f)),
+		})
 	return out
 
 
-## Borra un mod instalado. Los cambios ya montados se aplican al reiniciar.
+## Activa o desactiva un mod sin borrarlo. Se aplica al reiniciar.
+static func set_enabled(file_name: String, enabled: bool) -> void:
+	var off := disabled_files()
+	if enabled:
+		off.erase(file_name)
+	elif not off.has(file_name):
+		off.append(file_name)
+	var fa := FileAccess.open(AppPaths.path(STATE_FILE), FileAccess.WRITE)
+	if fa != null:
+		fa.store_string(JSON.stringify({"disabled": off}))
+		fa.close()
+
+
+## Borra un mod instalado. Se aplica al reiniciar.
 static func remove_installed(file_name: String) -> bool:
+	set_enabled(file_name, true)
 	return DirAccess.remove_absolute(AppPaths.mods_dir().path_join(file_name)) == OK
+
+
+static func disabled_files() -> Array:
+	var fa := FileAccess.open(AppPaths.path(STATE_FILE), FileAccess.READ)
+	if fa == null:
+		return []
+	var parsed = JSON.parse_string(fa.get_as_text())
+	if parsed is Dictionary and parsed.get("disabled") is Array:
+		return parsed["disabled"]
+	return []
 
 
 static func _read_manifest(zr: ZIPReader) -> Dictionary:

@@ -1,12 +1,16 @@
 extends Control
 
-## Menú principal: Jugar (mapas), Mods (instalados e importación) y Configuración.
+## Menú principal: Jugar (mapas), Mods (instalar, activar, quitar) y Configuración.
 ## Los mapas salen de res://maps/catalog.json, que un mod puede reemplazar.
 ## Los mods se importan desde Descargas/Untitled/importar y se activan al reiniciar.
+## Funciona igual en pantalla plana y dentro del panel 3D del casco (vr_menu.gd).
 
 const ModPacks = preload("res://mods/mod_packs.gd")
 const AppPaths = preload("res://storage/app_paths.gd")
+const GameConfig = preload("res://storage/game_config.gd")
 const CATALOG := "res://maps/catalog.json"
+const DIFFICULTIES := [["Fácil", "facil"], ["Normal", "normal"], ["Difícil", "dificil"]]
+const GORE_LEVELS := ["Apagado", "Normal", "Extremo"]
 
 var _content: VBoxContainer
 var _status: Label
@@ -67,14 +71,23 @@ func _show_mods() -> void:
 		_content.add_child(_label("No hay mods instalados."))
 	for m in installed:
 		var row := HBoxContainer.new()
-		var lbl := _label("%s  %s" % [m.get("name", ""), m.get("version", "")])
+		var perms := ", ".join(PackedStringArray(m.get("permissions", [])))
+		var lbl := _label("%s %s  [%s]" % [m.get("name", ""), m.get("version", ""), perms])
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(lbl)
+		var file_name := str(m.get("file", ""))
+		var toggle := Button.new()
+		toggle.text = "Activo" if m.get("enabled", true) else "Desactivado"
+		toggle.pressed.connect(func() -> void:
+			ModPacks.set_enabled(file_name, not m.get("enabled", true))
+			_status.text = "Reinicia el juego para aplicar el cambio."
+			_show_mods())
+		row.add_child(toggle)
 		var rm := Button.new()
 		rm.text = "Quitar"
-		var file_name := str(m.get("file", ""))
 		rm.pressed.connect(func() -> void:
 			ModPacks.remove_installed(file_name)
+			_status.text = "Mod quitado. Reinicia el juego para aplicar el cambio."
 			_show_mods())
 		row.add_child(rm)
 		_content.add_child(row)
@@ -82,8 +95,35 @@ func _show_mods() -> void:
 
 func _show_settings() -> void:
 	_clear()
+	var gore_row := HBoxContainer.new()
+	gore_row.add_child(_label("Gore"))
+	var gore := OptionButton.new()
+	for i in GORE_LEVELS.size():
+		gore.add_item(GORE_LEVELS[i], i)
+	gore.select(GameConfig.gore_level)
+	gore.item_selected.connect(func(i: int) -> void: GameConfig.set_gore(i); _save())
+	gore_row.add_child(gore)
+	_content.add_child(gore_row)
+
+	var diff_row := HBoxContainer.new()
+	diff_row.add_child(_label("Dificultad"))
+	var diff := OptionButton.new()
+	var selected := 1
+	for i in DIFFICULTIES.size():
+		diff.add_item(DIFFICULTIES[i][0], i)
+		if DIFFICULTIES[i][1] == GameConfig.difficulty:
+			selected = i
+	diff.select(selected)
+	diff.item_selected.connect(func(i: int) -> void: GameConfig.set_difficulty(DIFFICULTIES[i][1]); _save())
+	diff_row.add_child(diff)
+	_content.add_child(diff_row)
+
 	_content.add_child(_label("Carpeta de datos: " + AppPaths.root()))
-	_content.add_child(_label("Los cambios de mods necesitan reiniciar el juego."))
+
+
+func _save() -> void:
+	var err := GameConfig.save_config()
+	_status.text = "Guardado." if err == OK else "No se pudo guardar la configuración (error %d)." % err
 
 
 func _import_pending() -> void:
@@ -99,8 +139,8 @@ func _import_pending() -> void:
 			if r.get("ok", false):
 				ok += 1
 			else:
-				bad.append("%s: %s" % [f, ", ".join(r.get("errors", []))])
-	_status.text = "Importados: %d. %s Reinicia el juego para aplicarlos." % [ok, "" if bad.is_empty() else "Errores: " + "; ".join(bad)]
+				bad.append("%s: %s" % [f, ", ".join(PackedStringArray(r.get("errors", [])))])
+	_status.text = "Importados: %d. %s Reinicia el juego para aplicarlos." % [ok, "" if bad.is_empty() else "Errores: " + "; ".join(PackedStringArray(bad))]
 	_show_mods()
 
 

@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "untitled.demo-catalog",
+  "name": "Demo: catálogo de mapas",
+  "version": "1.0.0",
+  "engine": "4.7",
+  "permissions": ["maps"]
+}

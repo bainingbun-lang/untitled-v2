@@ -45,10 +45,38 @@ Los mapas se listan desde `maps/catalog.json`. Para agregar un mapa, un mod reem
 ]
 ```
 
-## Límites conocidos
-- **Scripts ya cargados no cambian** hasta reiniciar. Por eso los mods se montan al arrancar y no en caliente.
-- Un mod mal hecho puede romper el juego. Si el juego no abre tras instalar un mod, quítalo desde Descargas/Untitled/mods borrando su `.zip` y reinicia.
-- La pantalla del menú es 2D. En el casco sigue sin verificarse; hace falta un panel 3D (pendiente, ver `NEXT_STEPS.md`).
+## Activar, desactivar y quitar
+En **Mods** cada mod tiene un botón **Activo/Desactivado** y **Quitar**. Desactivar no borra el zip: el estado se guarda en `mods_state.json`. Los cambios se aplican al reiniciar.
 
-## Permisos
-Por ahora un mod puede tocar cualquier archivo del juego. Es una decisión explícita para que cualquier cosa sea moddeable. El sistema de permisos de la API (`UNTITLED/docs/MOD_PERMISSIONS_AUDIT.md`) queda como trabajo pendiente y no está conectado a los zips todavía.
+## Permisos declarados
+`mod.json` puede declarar `"permissions"` con áreas de: `gore`, `sandbox`, `maps`, `npc`, `weapons`, `textures`, `audio`, `scripts`, `data`. Un nombre fuera de esa lista rechaza el mod. Hoy el permiso es **informativo**: se muestra en la lista de mods, pero no restringe nada, porque un mod es un overlay de archivos y puede tocar cualquiera.
+
+## Configuración
+En **Configuración** eliges:
+- **Gore:** Apagado, Normal o Extremo. Se aplica al instante y se guarda en `settings.cfg` (sección `[gameplay]`).
+- **Dificultad:** Fácil, Normal o Difícil. Escala el daño de los disparos de los NPC contra el jugador (x0.5, x1, x1.5).
+
+## Mapas
+Los mapas se listan desde `maps/catalog.json`. Para agregar un mapa, un mod reemplaza ese archivo o agrega una entrada:
+```json
+[
+  {"name": "Sandbox: casa de 2 pisos", "scene": "res://sandbox/sandbox.tscn"},
+  {"name": "Mi mapa", "scene": "res://mods/mi_mapa/mi_mapa.tscn"}
+]
+```
+
+## Mod de ejemplo
+`mods/examples/demo_catalog.zip` agrega una entrada al catálogo de mapas. Copíalo a `Descargas/Untitled/importar/` para probarlo. Su fuente está en `mods/examples/demo_catalog/`.
+
+## Menú en el casco
+Al arrancar en VR se abre el menú en un panel 3D frente al jugador. Apunta con el rayo de cualquier mando y pulsa el gatillo. Es el mismo menú 2D renderizado en un SubViewport. **No verificado en casco real.**
+
+## Pruebas
+`godot --headless --path . --script res://tests/test_mod_packs.gd` prueba importar, desactivar, montar, rechazar un ZIP sin manifiesto y quitar.
+
+## Límites conocidos
+- **Scripts ya cargados no cambian** hasta reiniciar.
+- Un mod mal hecho puede romper el juego. Para quitarlo sin abrir el juego, borra su `.zip` de `Descargas/Untitled/mods/` y reinicia.
+- Los permisos son informativos, no se aplican.
+- `mods/mod_registry.gd` (copia distinta del de `UNTITLED/core/`) sigue en uso por `mod_loader.gd` para descubrir carpetas. El flujo de zips no lo usa. Unificarlos queda pendiente.
+- `godot.log` sigue en `user://` porque Godot lo escribe por su cuenta.

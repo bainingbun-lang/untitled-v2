@@ -1,5 +1,6 @@
 class_name BasicNpc
 extends CharacterBody3D
+const GameConfig = preload("res://storage/game_config.gd")
 
 signal action_changed(action: String)
 signal target_changed(source_id: String, visible: bool)
@@ -433,7 +434,7 @@ func _shoot(point: Vector3) -> Dictionary:
 		if not hit.is_empty():
 			result["collider"] = hit["collider"]
 			result["position"] = hit["position"]
-			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], SHOT_DAMAGE, self)
+			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], SHOT_DAMAGE * GameConfig.npc_damage_scale(), self)
 		if _gun_sound != null and _gun_sound.is_inside_tree():
 			_gun_sound.play()
 		if _gun != null and get_tree().current_scene != null:

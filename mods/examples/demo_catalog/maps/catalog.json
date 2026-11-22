@@ -1,0 +1,4 @@
+[
+  {"name": "Sandbox: casa de 2 pisos", "scene": "res://sandbox/sandbox.tscn"},
+  {"name": "Demo (mod): mismo sandbox con otro nombre", "scene": "res://sandbox/sandbox.tscn"}
+]
