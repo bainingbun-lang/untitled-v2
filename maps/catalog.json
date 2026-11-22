@@ -1,3 +1,10 @@
 [
-  {"name": "Sandbox: casa de 2 pisos", "scene": "res://sandbox/sandbox.tscn"}
+  {
+    "name": "Sandbox: casa de 2 pisos",
+    "scene": "res://sandbox/sandbox.tscn"
+  },
+  {
+    "name": "Casa descargada (CC0)",
+    "scene": "res://maps/house_model/house_map.tscn"
+  }
 ]
