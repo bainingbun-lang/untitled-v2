@@ -10,6 +10,10 @@ const NpcSpawner = preload("res://npc/npc_spawner.gd")
 const REINFORCEMENTS := 3
 const BEHIND_RANGE := 3.0
 const SHOUT_TIME := 2.0
+const GameConfig = preload("res://storage/game_config.gd")
+const POLICE_UNITS := 2
+const POLICE_CAP := 4
+const BulletImpact = preload("res://gore/bullet_impact.gd")
 const Sfx = preload("res://audio/sfx.gd")
 ## Tiempo tras aparecer en el que los daños (caídas al piso, choques) no provocan reacciones.
 const GRACE_TIME := 3.0
@@ -19,6 +23,9 @@ var _eye: Node3D
 var _npcs: Array = []
 var _budget := REINFORCEMENTS
 var _check_time := 0.0
+var _seen_shots := 0
+var _police_at_ms := -1
+var _police_sent := 0
 var _born := {}
 
 
@@ -60,6 +67,7 @@ func _on_damaged(_amount: float, _health: float, npc: Node) -> void:
 
 func _process(delta: float) -> void:
 	_check_time -= delta
+	_police_tick()
 	if _check_time > 0.0 or not is_instance_valid(_eye):
 		return
 	_check_time = 0.5
@@ -99,3 +107,27 @@ func _remove_shout(ref: WeakRef) -> void:
 	var label := ref.get_ref() as Node
 	if label != null:
 		label.queue_free()
+
+
+## Policía: si está encendida, tras el primer disparo llega una unidad armada después de police_delay segundos.
+func _police_tick() -> void:
+	if not GameConfig.police or not is_instance_valid(_map):
+		return
+	if BulletImpact.shots_fired > _seen_shots and _police_at_ms < 0 and _police_sent < POLICE_CAP:
+		_police_at_ms = Time.get_ticks_msec() + GameConfig.police_delay * 1000
+	_seen_shots = BulletImpact.shots_fired
+	if _police_at_ms >= 0 and Time.get_ticks_msec() >= _police_at_ms:
+		_police_at_ms = -1
+		var pos: Vector3 = _eye.global_position + Vector3(randf_range(-12, 12), 0, randf_range(-12, 12)) if is_instance_valid(_eye) else Vector3(0, 0.5, 0)
+		var made: Array = NpcSpawner.spawn(_map, [{"id": "policia", "role": "hostile", "armed": true, "count": POLICE_UNITS}], [pos], _eye)
+		_police_sent += POLICE_UNITS
+		for m in made:
+			_watch(m)
+		_shout_all("¡Policía! ¡Suelten las armas!")
+
+
+func _shout_all(text: String) -> void:
+	for npc in _npcs:
+		if is_instance_valid(npc):
+			_shout(npc, text)
+			break

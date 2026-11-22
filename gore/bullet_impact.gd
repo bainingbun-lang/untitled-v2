@@ -5,11 +5,15 @@ const EXIT_MAX_THICKNESS := 0.45
 const EXIT_WOUND_SIZE := 0.07
 ## Daño mínimo de un solo impacto en la cabeza para que se abra (escopeta de cerca, Barrett).
 const HEADSHOT_MIN_DAMAGE := 40.0
+## Disparos registrados (para que la policía reaccione a los tiros).
+static var shots_fired := 0
 
 ## Entry point for any hitscan weapon: damages the collider and adds a bullet wound on NPCs/props.
 static func apply(collider: Object, point: Vector3, normal: Vector3, damage: float, source: Node = null) -> void:
 	if collider == null:
 		return
+	if source != null and source.has_method("action"):
+		shots_fired += 1
 	var headshot := false
 	if collider.has_method("take_damage"):
 		var zone := ""

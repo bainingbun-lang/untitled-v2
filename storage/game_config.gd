@@ -19,6 +19,9 @@ static var right_pocket: String = "ak47"
 const DENSITY_PER_M2 := {"bajo": 0.08, "medio": 0.16, "alto": 0.3}
 static var density: String = "medio"
 static var zombies: bool = false
+## Policía: si está encendida, llega tras disparos. delay en segundos (30 s o 300 s).
+static var police: bool = false
+static var police_delay: int = 30
 
 
 static func npc_damage_scale() -> float:
@@ -37,6 +40,8 @@ static func load_config() -> void:
 		right_pocket = "ak47"
 	density = str(cf.get_value(SECTION, "density", "medio"))
 	zombies = bool(cf.get_value(SECTION, "zombies", false))
+	police = bool(cf.get_value(SECTION, "police", false))
+	police_delay = int(cf.get_value(SECTION, "police_delay", 30))
 	if not POCKET_WEAPONS.has(left_pocket):
 		left_pocket = "pistol"
 	GoreScript.set_gore_level(gore_level)
@@ -51,6 +56,8 @@ static func save_config() -> int:
 	cf.set_value(SECTION, "right_pocket", right_pocket)
 	cf.set_value(SECTION, "density", density)
 	cf.set_value(SECTION, "zombies", zombies)
+	cf.set_value(SECTION, "police", police)
+	cf.set_value(SECTION, "police_delay", police_delay)
 	return cf.save(AppPaths.settings_file())
 
 
