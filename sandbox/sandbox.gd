@@ -21,6 +21,7 @@ var _weapon_pickable: Node3D = null
 func _ready() -> void:
 	RemoteLog.crumb("SANDBOX: ready start")
 	_build_house()
+	await get_tree().physics_frame
 	_build_map()
 	_spawn_npcs()
 	_equip_weapon()
