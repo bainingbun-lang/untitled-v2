@@ -12,6 +12,12 @@ extends VrWeaponBase
 @export var ammunition: int = 12
 @export var damage: float = 34.0
 
+## Emits "draw", "eject_magazine", "insert_magazine", "rack_slide", "Fire", "EmptyClick".
+signal weapon_action(action_name: String)
+
+var drawn: bool = false
+var reload: WeaponReload = WeaponReload.new(magazine_size)
+
 @export var rumble: float = 0.0:
 	set = set_rumble, get = get_rumble
 
@@ -32,18 +38,61 @@ func set_ammunition(new_value: int) -> void:
 			get_node("Ammo_count_viewport/Ammo_count").text = str(ammunition)
 			get_node("Ammo_count_viewport").render_target_update_mode = SubViewport.UPDATE_ONCE
 
-func action() -> void:
-	if not has_node("AnimationPlayer") or $AnimationPlayer.is_playing():
-		return
-	if ammunition > 0:
-		set_ammunition(ammunition - 1)
-		_play_anim("Fire")
-		_emit_smoke()
+func _ready() -> void:
+	super()
+	reload.magazine_size = magazine_size
+	reload.reload_action.connect(_on_reload_action)
+	set_ammunition(reload.total_rounds())
 
-		if has_node("Aim") and $Aim.is_colliding():
-			BulletImpact.apply($Aim.get_collider(), $Aim.get_collision_point(), $Aim.get_collision_normal(), damage, self)
-	else:
+func draw() -> void:
+	drawn = true
+	weapon_action.emit("draw")
+
+func holster_draw() -> void:
+	draw()
+
+func pick_up(by: Node, with_controller: XRController3D) -> void:
+	super(by, with_controller)
+	draw()
+
+func let_go(starting_linear_velocity: Vector3 = Vector3.ZERO) -> void:
+	super(starting_linear_velocity)
+	drawn = false
+
+func eject_magazine() -> bool:
+	return reload.eject_magazine()
+
+func insert_magazine(rounds: int = -1) -> bool:
+	return reload.insert_magazine(rounds)
+
+func rack_slide() -> void:
+	reload.rack_slide()
+
+func is_chambered() -> bool:
+	return reload.chambered
+
+func action() -> void:
+	if not drawn or (has_node("AnimationPlayer") and $AnimationPlayer.is_playing()):
+		return
+	if not reload.fire():
 		_play_anim("EmptyClick")
+		weapon_action.emit("EmptyClick")
+		return
+	set_ammunition(reload.total_rounds())
+	_play_anim("Fire")
+	_emit_smoke()
+	ShotFx.fire($Pivot/Smoke_spawn_point)
+	weapon_action.emit("Fire")
+	if has_node("Aim"):
+		$Aim.force_raycast_update()
+		if $Aim.is_colliding():
+			BulletImpact.apply($Aim.get_collider(), $Aim.get_collision_point(), $Aim.get_collision_normal(), damage, self)
+
+func _on_reload_action(action_name: String) -> void:
+	set_ammunition(reload.total_rounds())
+	if action_name == "insert_magazine":
+		_play_anim("Load")
+	weapon_action.emit(action_name)
 
 ## Scene may not ship these animations yet; skip missing ones instead of erroring.
 func _play_anim(anim: String) -> void:
@@ -51,7 +100,7 @@ func _play_anim(anim: String) -> void:
 		$AnimationPlayer.play(anim)
 
 func _process(delta: float) -> void:
-	if has_node("Aim") and $Aim.is_colliding():
+	if has_node("Aim/Target_dot") and $Aim.is_colliding():
 		$Aim/Target_dot.global_transform.origin = $Aim.get_collision_point()
 		$Aim/Target_dot.visible = true
 	else:
@@ -74,11 +123,6 @@ func _emit_smoke() -> void:
 		get_node("/root/Main/Viewport-VR/Spawns").add_child(new_smoke)
 
 func _on_Gun_load_point_body_entered(body: Node3D) -> void:
-	## Our ammo is loaded, so we can destroy our magazine
-	body.call("drop_and_free")
-
-	## And reload
-	set_ammunition(magazine_size)
-
-	## And finally play reload animation
-	_play_anim("Load")
+	## Magazine body touching the load point counts as insertion
+	if insert_magazine():
+		body.call("drop_and_free")

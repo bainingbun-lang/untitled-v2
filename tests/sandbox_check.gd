@@ -12,7 +12,7 @@ var checking_done: bool = false
 func _init() -> void:
 	print("SANDBOX CHECK: Starting...")
 
-func _ready() -> void:
+func _initialize() -> void:
 	_load_sandbox()
 
 func _load_sandbox() -> void:

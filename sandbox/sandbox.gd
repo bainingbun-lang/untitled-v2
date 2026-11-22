@@ -8,14 +8,14 @@ const HouseBuilder = preload("res://maps/house_builder.gd")
 const BasicNpc = preload("res://npc/basic_npc.gd")
 const VrWeaponHand = preload("res://weapons/vr_weapon_hand.gd")
 const FunctionPickup = preload("res://grab/function_pickup.gd")
-const WeaponPickable = preload("res://grab/pickable.gd")
+const InventoryScript = preload("res://inventory/inventory.gd")
 
 
 var _map_ok: bool = false
 var _npcs_ok: bool = false
 var _weapon_ok: bool = false
 var _weapon_hand: VrWeaponHand = null
-var _weapon_pickable: WeaponPickable = null
+var _weapon_pickable: Node3D = null
 
 
 func _ready() -> void:
@@ -127,9 +127,9 @@ func _equip_weapon() -> void:
 		controller.add_child(pickup)
 	pickup.set_controller(controller)
 
-	_weapon_pickable = _create_weapon_pickable(player)
+	_weapon_pickable = _create_weapon_ak(player)
 	if not is_instance_valid(_weapon_pickable):
-		push_warning("Sandbox: WeaponPickable no válido")
+		push_warning("Sandbox: AK47 no válido")
 		_weapon_ok = false
 		return
 
@@ -138,29 +138,36 @@ func _equip_weapon() -> void:
 	if not pickup.has_dropped.is_connected(_on_weapon_dropped):
 		pickup.has_dropped.connect(_on_weapon_dropped)
 
+	var origin := controller.get_parent()
+	var left := origin.get_node_or_null("LeftController") as XRController3D
+	for c in [controller, left]:
+		if c != null and c.get_node_or_null("HandModel") == null:
+			c.add_child(HandModel.new())
+	var holster := Holster.new()
+	holster.controller = controller
+	holster.weapon = _weapon_pickable
+	origin.add_child(holster)
+	holster.position = Vector3(0.25, 0.8, 0.0)
+	_weapon_pickable.global_position = holster.global_position
+	holster.drawn.connect(func() -> void:
+		if _weapon_hand.weapon_id.is_empty():
+			_weapon_pickable.call("pick_up", controller, controller)
+			_on_weapon_picked_up(_weapon_pickable))
+
+	if left != null:
+		var inventory := InventoryScript.new()
+		inventory.name = "Inventory"
+		add_child(inventory)
+		inventory.setup(controller, left)
+		inventory.add("pistol")
+		inventory.hold_existing(inventory.right, "ak47", _weapon_pickable)
+
 	_weapon_ok = true
-	print("Sandbox: arma lista para agarrar con grip (WeaponPickup -> WeaponPickable)")
+	print("Sandbox: AK47 en funda, grip en la funda para sacarla")
 
 
-func _create_weapon_pickable(player: Node3D) -> WeaponPickable:
-	var weapon := WeaponPickable.new()
-	weapon.name = "WeaponPickable"
-	weapon.set_meta("weapon_id", "pistol")
-	weapon.collision_layer = 4
-	weapon.collision_mask = 1
-	weapon.add_to_group("weapon_pickup")
-	weapon.add_to_group("grabbable")
-	var visual := Node3D.new()
-	visual.name = "Visual"
-	var body := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(0.05, 0.07, 0.24)
-	body.mesh = box
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.16, 0.18, 0.20)
-	body.material_override = material
-	visual.add_child(body)
-	weapon.add_child(visual)
+func _create_weapon_ak(player: Node3D) -> Node3D:
+	var weapon := (load("res://weapons/ak47.tscn") as PackedScene).instantiate() as Node3D
 	add_child(weapon)
 	weapon.global_position = player.global_position + Vector3(0.35, 1.0, -0.25)
 	return weapon

@@ -1,4 +1,4 @@
-[gd_resource type="OpenXRActionMap" load_steps=43 format=3 uid="uid://ks31262wwea0"]
+[gd_resource type="OpenXRActionMap" load_steps=49 format=3 uid="uid://ks31262wwea0"]
 
 [sub_resource type="OpenXRAction" id="OpenXRAction_cpc3n"]
 resource_name = "walk_direction"
@@ -62,10 +62,28 @@ localized_name = "Turn enable"
 action_type = 0
 toplevel_paths = PackedStringArray("/user/hand/right")
 
+[sub_resource type="OpenXRAction" id="OpenXRAction_mnbtn"]
+resource_name = "menu_button"
+localized_name = "Menu button"
+action_type = 0
+toplevel_paths = PackedStringArray("/user/hand/left")
+
+[sub_resource type="OpenXRAction" id="OpenXRAction_axbtn"]
+resource_name = "ax_button"
+localized_name = "A/X button"
+action_type = 0
+toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right")
+
+[sub_resource type="OpenXRAction" id="OpenXRAction_gripclk"]
+resource_name = "grip_click"
+localized_name = "Grip click"
+action_type = 0
+toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right")
+
 [sub_resource type="OpenXRActionSet" id="OpenXRActionSet_tpi5w"]
 resource_name = "vrtemplate"
 localized_name = "VR Template"
-actions = [SubResource("OpenXRAction_cpc3n"), SubResource("OpenXRAction_h66ig"), SubResource("OpenXRAction_6bq44"), SubResource("OpenXRAction_vgswk"), SubResource("OpenXRAction_k31h2"), SubResource("OpenXRAction_1pu3x"), SubResource("OpenXRAction_ib4oa"), SubResource("OpenXRAction_odp37"), SubResource("OpenXRAction_x8d5i"), SubResource("OpenXRAction_ij7qb"), SubResource("OpenXRAction_w8m7h")]
+actions = [SubResource("OpenXRAction_cpc3n"), SubResource("OpenXRAction_h66ig"), SubResource("OpenXRAction_6bq44"), SubResource("OpenXRAction_vgswk"), SubResource("OpenXRAction_k31h2"), SubResource("OpenXRAction_1pu3x"), SubResource("OpenXRAction_ib4oa"), SubResource("OpenXRAction_odp37"), SubResource("OpenXRAction_x8d5i"), SubResource("OpenXRAction_ij7qb"), SubResource("OpenXRAction_w8m7h"), SubResource("OpenXRAction_mnbtn"), SubResource("OpenXRAction_axbtn"), SubResource("OpenXRAction_gripclk")]
 
 [sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_g2gsc"]
 action = SubResource("OpenXRAction_6bq44")
@@ -143,9 +161,21 @@ paths = PackedStringArray("/user/hand/right/input/thumbstick/touch")
 action = SubResource("OpenXRAction_h66ig")
 paths = PackedStringArray("/user/hand/left/input/thumbstick/click")
 
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_mnb"]
+action = SubResource("OpenXRAction_mnbtn")
+paths = PackedStringArray("/user/hand/left/input/menu/click")
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_axb"]
+action = SubResource("OpenXRAction_axbtn")
+paths = PackedStringArray("/user/hand/left/input/x/click", "/user/hand/right/input/a/click")
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_gcb"]
+action = SubResource("OpenXRAction_gripclk")
+paths = PackedStringArray("/user/hand/left/input/squeeze/value", "/user/hand/right/input/squeeze/value")
+
 [sub_resource type="OpenXRInteractionProfile" id="OpenXRInteractionProfile_6gxrt"]
 interaction_profile_path = "/interaction_profiles/oculus/touch_controller"
-bindings = [SubResource("OpenXRIPBinding_b3rgy"), SubResource("OpenXRIPBinding_yx6v1"), SubResource("OpenXRIPBinding_6acp6"), SubResource("OpenXRIPBinding_x0aj2"), SubResource("OpenXRIPBinding_qlvlo"), SubResource("OpenXRIPBinding_5m2dx"), SubResource("OpenXRIPBinding_qmi2h"), SubResource("OpenXRIPBinding_qm1cs"), SubResource("OpenXRIPBinding_1dkak")]
+bindings = [SubResource("OpenXRIPBinding_b3rgy"), SubResource("OpenXRIPBinding_yx6v1"), SubResource("OpenXRIPBinding_6acp6"), SubResource("OpenXRIPBinding_x0aj2"), SubResource("OpenXRIPBinding_qlvlo"), SubResource("OpenXRIPBinding_5m2dx"), SubResource("OpenXRIPBinding_qmi2h"), SubResource("OpenXRIPBinding_qm1cs"), SubResource("OpenXRIPBinding_1dkak"), SubResource("OpenXRIPBinding_mnb"), SubResource("OpenXRIPBinding_axb"), SubResource("OpenXRIPBinding_gcb")]
 
 [sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_x15dv"]
 action = SubResource("OpenXRAction_1pu3x")
