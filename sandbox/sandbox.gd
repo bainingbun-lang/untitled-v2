@@ -4,6 +4,7 @@ extends Node3D
 const RemoteLog = preload("res://debug/remote_log.gd")
 
 const MapWorldBuilder = preload("res://maps/map_world_builder.gd")
+const HouseBuilder = preload("res://maps/house_builder.gd")
 const BasicNpc = preload("res://npc/basic_npc.gd")
 const VrWeaponHand = preload("res://weapons/vr_weapon_hand.gd")
 const FunctionPickup = preload("res://grab/function_pickup.gd")
@@ -19,11 +20,24 @@ var _weapon_pickable: WeaponPickable = null
 
 func _ready() -> void:
 	RemoteLog.crumb("SANDBOX: ready start")
+	_build_house()
 	_build_map()
 	_spawn_npcs()
 	_equip_weapon()
 	_print_summary()
 	RemoteLog.crumb("SANDBOX: ready end")
+
+
+func _build_house() -> void:
+	var result: Dictionary = HouseBuilder.build_two_story_house(Vector3.ZERO, self)
+	
+	if result.get("ok", false):
+		print("Sandbox: casa 2 pisos construida OK, nodos: ", result.get("node_count", 0))
+	else:
+		var errs: Array = result.get("errors", [])
+		for e in errs:
+			push_warning("Sandbox: casa fallo - ", e)
+		print("Sandbox: casa FALLÓ - ", errs)
 
 
 func _build_map() -> void:

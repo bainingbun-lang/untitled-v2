@@ -8,16 +8,19 @@ extends RigidBody3D
 ## Set hold mode
 @export var press_to_hold: bool = true
 @export var reset_transform_on_pickup: bool = true
-@export var center_pickup_on: NodePath = null
-@export var highlight_mesh_instance: NodePath = null
+@export var center_pickup_on: NodePath = NodePath()
+@export var highlight_mesh_instance: NodePath = NodePath()
 @export var picked_up_layer: int = 0
+
+const HIGHLIGHT_PATH := "res://addons/godot-xr-tools/materials/highlight.tres"
 
 ## Remember some state so we can return to it when the user drops the object
 @onready var original_parent: Node3D = get_parent() as Node3D
 @onready var original_collision_mask: int = collision_mask
 @onready var original_collision_layer: int = collision_layer
 
-var highlight_material = preload("res://addons/godot-xr-tools/materials/highlight.tres")
+## shortcut: godot-xr-tools addon is not in this project; highlight is skipped until it is added.
+var highlight_material = load(HIGHLIGHT_PATH) if ResourceLoader.exists(HIGHLIGHT_PATH) else null
 var original_materials: Array = []
 var highlight_mesh_instance_node: MeshInstance3D = null
 
@@ -35,9 +38,9 @@ func _update_highlight() -> void:
 	if highlight_mesh_instance_node:
 		for i in range(highlight_mesh_instance_node.get_surface_material_count()):
 			if closest_count > 0:
-				highlight_mesh_instance_node.set_surface_material(i, highlight_material)
+				highlight_mesh_instance_node.set_surface_override_material(i, highlight_material)
 			else:
-				highlight_mesh_instance_node.set_surface_material(i, original_materials[i])
+				highlight_mesh_instance_node.set_surface_override_material(i, original_materials[i])
 
 func increase_is_closest() -> void:
 	closest_count += 1
@@ -65,7 +68,7 @@ func pick_up(by: Node, with_controller: XRController3D) -> void:
 	by_controller = with_controller
 
 	## Turn off physics on our pickable object
-	mode = RigidBody3D.MODE_STATIC
+	freeze = true
 	collision_layer = picked_up_layer
 	collision_mask = 0
 
@@ -96,7 +99,7 @@ func let_go(starting_linear_velocity: Vector3 = Vector3.ZERO) -> void:
 
 		## Reposition it and apply impulse
 		global_transform = t
-		mode = RigidBody3D.MODE_RIGID
+		freeze = false
 		collision_mask = original_collision_mask
 		collision_layer = original_collision_layer
 
@@ -112,7 +115,7 @@ func _ready() -> void:
 		highlight_mesh_instance_node = get_node(highlight_mesh_instance)
 		if highlight_mesh_instance_node:
 			for i in range(highlight_mesh_instance_node.get_surface_material_count()):
-				original_materials.append(highlight_mesh_instance_node.get_surface_material(i))
+				original_materials.append(highlight_mesh_instance_node.get_surface_override_material(i))
 
 	if center_pickup_on:
 		center_pickup_on_node = get_node(center_pickup_on)

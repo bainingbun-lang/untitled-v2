@@ -10,10 +10,10 @@ extends VrWeaponBase
 @export var initial_casing_velocity: float = 5.0
 @export var magazine_size: int = 12
 @export var ammunition: int = 12
+@export var damage: float = 34.0
 
 @export var rumble: float = 0.0:
-	set = set_rumble
-	get = get_rumble
+	set = set_rumble, get = get_rumble
 
 func set_rumble(new_value: float) -> void:
 	if by_controller:
@@ -30,22 +30,25 @@ func set_ammunition(new_value: int) -> void:
 		ammunition = new_value
 		if has_node("Ammo_count_viewport/Ammo_count"):
 			get_node("Ammo_count_viewport/Ammo_count").text = str(ammunition)
-			get_node("Ammo_count_viewport").render_target_update_mode = Viewport.UPDATE_ONCE
+			get_node("Ammo_count_viewport").render_target_update_mode = SubViewport.UPDATE_ONCE
 
 func action() -> void:
 	if not has_node("AnimationPlayer") or $AnimationPlayer.is_playing():
 		return
 	if ammunition > 0:
 		set_ammunition(ammunition - 1)
-		$AnimationPlayer.play("Fire")
+		_play_anim("Fire")
 		_emit_smoke()
 
 		if has_node("Aim") and $Aim.is_colliding():
-			var what_did_we_hit = $Aim.get_collider()
-			if what_did_we_hit.has_method("hit"):
-				what_did_we_hit.hit($Aim.get_collision_point())
+			BulletImpact.apply($Aim.get_collider(), $Aim.get_collision_point(), $Aim.get_collision_normal(), damage, self)
 	else:
-		$AnimationPlayer.play("EmptyClick")
+		_play_anim("EmptyClick")
+
+## Scene may not ship these animations yet; skip missing ones instead of erroring.
+func _play_anim(anim: String) -> void:
+	if has_node("AnimationPlayer") and $AnimationPlayer.has_animation(anim):
+		$AnimationPlayer.play(anim)
 
 func _process(delta: float) -> void:
 	if has_node("Aim") and $Aim.is_colliding():
@@ -78,4 +81,4 @@ func _on_Gun_load_point_body_entered(body: Node3D) -> void:
 	set_ammunition(magazine_size)
 
 	## And finally play reload animation
-	$AnimationPlayer.play("Load")
+	_play_anim("Load")

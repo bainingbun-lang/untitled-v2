@@ -2,7 +2,7 @@
 # Compila el APK de VR (Quest) en CI (Linux x86_64). Requiere: godot, JDK17, Android SDK, plantillas de exportacion 4.7.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; P="$ROOT/build/vr_project"; OUT="${1:-$ROOT/build/untitled_vr_debug.apk}"
-GODOT="${GODOT:-godot}"; PRESET="Quest VR"
+GODOT="${GODOT:-godot}"; PRESET="QuestVR"
 VENDOR_VERSION="5.2.0-stable"
 VENDOR_SHA256="2a3958fff0de2dbdc4f1a036b5e4cfcea12ae7e45f8deebf4b45e5e9718c4e35"
 VENDOR_URL="https://github.com/GodotVR/godot_openxr_vendors/releases/download/${VENDOR_VERSION}/godotopenxrvendorsaddon.zip"
