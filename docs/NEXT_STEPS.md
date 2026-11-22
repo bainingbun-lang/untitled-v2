@@ -32,3 +32,25 @@ Versión estable con menú principal (Jugar, Mods, Configuración) y un sistema 
 ## Lo que ya existe y no se rehace
 - Gore, sandbox 7 NPCs, mapa de casa 2 pisos, pistola con botones A/B (cambios sin commit antes de esta fase).
 - Sistema de mods completo en `UNTITLED/core/` (manifiesto, resolución, bus de eventos, copias, perfiles). Se reutiliza, no se reescribe.
+
+## Estado de la última pasada (sesión larga)
+
+### Hecho y probado headless
+- Pruebas: `bash tests/run_all.sh` (mods: 8 casos; armas: 23 comprobaciones).
+- Armas: sniper, machete, escopeta (8 perdigones, 12 de daño), Barrett (150 de daño), subfusil (cadencia 0.07 s). Bolsillos izquierdo y derecho configurables.
+- Escopeta: 8 perdigones dispersos, cada uno con su impacto. Probado en sandbox: 96 de daño a un NPC.
+- Cabeza: disparo ≥ 40 de daño en la cabeza abre la herida; cuchillo con 4 cortes en el cuello decapita.
+- Golpes: el puño y el agarre de NPC (estrellón) aplican impacto con cabeza/torso.
+- NPC: grito de refuerzo, aviso "¿Quién anda ahí?" por detrás, reacción según gravedad ("Oye, basta", "Me rindo").
+- Policía: tras disparos, llega una unidad armada a los 30 s o 5 min (apagada por defecto, nunca en la sandbox).
+- Zombis: se acercan al jugador dentro de 14 m (configurable en Configuración).
+- Población: casa 4, escuela hasta 60, oficina 37 (modelo a escala x3).
+- Sonido: sonidos reales del proyecto para disparos de NPC; grito e impacto generados en código.
+
+### Pendiente / no verificado
+- Tácticas (rodear, quitar arma a policías): no implementado.
+- Correr con joystick o mano: no implementado.
+- Cartucho manual: la lógica existe (`weapons/weapon_reload.gd`); falta el gesto de mano.
+- Retroceso: ajustado en escopeta y Barrett; no visto en VR.
+- Todo lo de VR con mando real: sin probar (no hay casco aquí).
+- Mapas descargados: escuela, casa, oficina. Faltan hospital y edificio de trabajo (sin fuente CC0 con descarga directa).
