@@ -31,23 +31,78 @@ func _ready() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_texture = _viewport.get_texture()
 	_panel.material_override = mat
-	_panel.position = Vector3(0, 1.4, -2.0)
 	add_child(_panel)
 
 	var player := get_node_or_null("VRPlayer")
 	if player == null:
 		return
+	_head = player.get_node_or_null("CharacterBody3D/Origin/Camera") as XRCamera3D
+	call_deferred("_place_panel")
 	for path in ["CharacterBody3D/Origin/LeftController", "CharacterBody3D/Origin/RightController"]:
 		var c := player.get_node_or_null(path) as XRController3D
 		if c != null:
 			_controllers.append(c)
 			c.button_pressed.connect(_on_button.bind(c, true))
 			c.button_released.connect(_on_button.bind(c, false))
+			_add_laser(c)
+
+
+var _head: XRCamera3D
+var _placed := false
+var _lasers: Dictionary = {}
+
+
+## Coloca el panel frente a la cabeza (a 2 m, a la altura de los ojos) y lo deja fijo.
+## Así no se queda abajo ni arriba según la altura del suelo.
+func _place_panel() -> void:
+	if _placed or _head == null:
+		return
+	var eye := _head.global_position
+	var fwd := -_head.global_basis.z
+	fwd.y = 0.0
+	if fwd.length_squared() < 0.0001:
+		fwd = Vector3.FORWARD
+	fwd = fwd.normalized()
+	_panel.global_position = Vector3(eye.x, eye.y - 0.1, eye.z) + fwd * 2.0
+	_panel.look_at(eye, Vector3.UP)
+	_panel.rotate_y(PI)
+	_placed = true
+
+
+## Línea visible desde el mando hasta el panel, para apuntar.
+func _add_laser(c: XRController3D) -> void:
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.002
+	mesh.bottom_radius = 0.002
+	mesh.height = 1.0
+	var laser := MeshInstance3D.new()
+	laser.mesh = mesh
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(1.0, 0.25, 0.2)
+	laser.material_override = mat
+	c.add_child(laser)
+	_lasers[c] = laser
+
+
+func _update_laser(c: XRController3D, hit: Dictionary) -> void:
+	var laser := _lasers.get(c) as MeshInstance3D
+	if laser == null:
+		return
+	var length := 3.0
+	if not hit.is_empty():
+		length = (c.global_position - _panel.global_position).length() if hit.has("world") == false else (hit["world"] as Vector3 - c.global_position).length()
+	laser.visible = true
+	laser.position = Vector3(0, 0, -length * 0.5)
+	laser.rotation = Vector3(PI * 0.5, 0, 0)
+	laser.scale = Vector3(1, length, 1)
 
 
 func _process(_delta: float) -> void:
+	_place_panel()
 	for c in _controllers:
 		var hit := _ray_panel(c)
+		_update_laser(c, hit)
 		if hit.is_empty():
 			continue
 		var motion := InputEventMouseMotion.new()
@@ -86,4 +141,4 @@ func _ray_panel(c: XRController3D) -> Dictionary:
 		return {}
 	var u := (local.x + PANEL_SIZE.x * 0.5) / PANEL_SIZE.x
 	var v := (PANEL_SIZE.y * 0.5 - local.y) / PANEL_SIZE.y
-	return {"pos": Vector2(u * VIEW_SIZE.x, v * VIEW_SIZE.y)}
+	return {"pos": Vector2(u * VIEW_SIZE.x, v * VIEW_SIZE.y), "world": from + dir * t}
