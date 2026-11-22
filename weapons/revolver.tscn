@@ -1,0 +1,80 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://weapons/vr_weapon_pistol.gd" id="1"]
+[ext_resource type="Script" path="res://weapons/pistol_parts.gd" id="2"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gray"]
+albedo_color = Color(0.4, 0.4, 0.4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_col"]
+size = Vector3(0.05, 0.12, 0.25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+size = Vector3(0.05, 0.12, 0.25)
+material = SubResource("StandardMaterial3D_gray")
+
+[sub_resource type="BoxMesh" id="BoxMesh_slide"]
+size = Vector3(0.03, 0.04, 0.18)
+material = SubResource("StandardMaterial3D_gray")
+
+[sub_resource type="BoxMesh" id="BoxMesh_magazine"]
+size = Vector3(0.03, 0.12, 0.035)
+material = SubResource("StandardMaterial3D_gray")
+
+[sub_resource type="BoxMesh" id="BoxMesh_trigger"]
+size = Vector3(0.01, 0.03, 0.02)
+material = SubResource("StandardMaterial3D_gray")
+
+[sub_resource type="BoxMesh" id="BoxMesh_hammer"]
+size = Vector3(0.02, 0.03, 0.04)
+material = SubResource("StandardMaterial3D_gray")
+
+[node name="Revolver" type="RigidBody3D"]
+freeze = true
+script = ExtResource("1")
+magazine_size = 6
+ammunition = 6
+fire_interval = 0.4
+damage = 60.0
+
+[node name="Parts" type="Node3D" parent="."]
+script = ExtResource("2")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_body")
+
+[node name="Slide" type="MeshInstance3D" parent="Parts"]
+mesh = SubResource("BoxMesh_slide")
+position = Vector3(0, 0.04, -0.05)
+
+[node name="Magazine" type="MeshInstance3D" parent="Parts"]
+mesh = SubResource("BoxMesh_magazine")
+position = Vector3(0, -0.06, 0.05)
+
+[node name="Trigger" type="MeshInstance3D" parent="Parts"]
+mesh = SubResource("BoxMesh_trigger")
+position = Vector3(0, -0.02, 0.08)
+
+[node name="Hammer" type="MeshInstance3D" parent="Parts"]
+mesh = SubResource("BoxMesh_hammer")
+position = Vector3(0, 0.05, 0.02)
+
+[node name="Chamber" type="Marker3D" parent="Parts"]
+position = Vector3(0, 0.04, -0.12)
+
+[node name="Aim" type="RayCast3D" parent="."]
+target_position = Vector3(0, 0, -50)
+
+[node name="Target_dot" type="MeshInstance3D" parent="Aim"]
+visible = false
+
+[node name="Pivot" type="Node3D" parent="."]
+
+[node name="Casing_spawn_point" type="Marker3D" parent="Pivot"]
+
+[node name="Smoke_spawn_point" type="Marker3D" parent="Pivot"]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_col")

@@ -16,6 +16,11 @@ const SCENES := {
 	"barrett": "res://weapons/barrett.tscn",
 	"smg": "res://weapons/smg.tscn",
 	"machete": "res://weapons/machete.tscn",
+	"revolver": "res://weapons/revolver.tscn",
+	"fusil": "res://weapons/fusil.tscn",
+	"pdw": "res://weapons/pdw.tscn",
+	"tanto": "res://weapons/tanto.tscn",
+	"hacha": "res://weapons/hacha.tscn",
 }
 
 @export var menu_action := "menu_button"
