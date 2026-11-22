@@ -1,10 +1,12 @@
 extends Node
 
+const AppPaths = preload("res://storage/app_paths.gd")
+
 
 ## Default file path to load settings from.
-const SETTINGS_FILE_PATH = "user://settings.cfg"
+## Ruta resuelta en runtime por AppPaths (Descargas en Android).
 ## Default file path to load controller settings from.
-const CONTROLLER_SETTINGS_PATH = "user://controller_settings.cfg"
+## Ruta resuelta en runtime por AppPaths.
 const _DEFAULT_CONTROLLER_SETTINGS = {
 	"/interaction_profiles/htc/vive_controller" = "res://controller_defaults/vive_controller.tres",
 	"/interaction_profiles/oculus/touch_controller" = "res://controller_defaults/touch_controller.tres",
@@ -43,7 +45,9 @@ var _controller_settings: ConfigFile
 
 
 ## Load settings from the file at [param from_path]. Returns the error code from reading the file.
-func load_settings(from_path: String = SETTINGS_FILE_PATH) -> int:
+func load_settings(from_path: String = "") -> int:
+	if from_path == "":
+		from_path = AppPaths.settings_file()
 	var config_file := ConfigFile.new()
 	var error_code := config_file.load(from_path)
 	
@@ -68,7 +72,9 @@ func load_settings(from_path: String = SETTINGS_FILE_PATH) -> int:
 
 
 ## Save settings at the location [param to_path]. Returns the error code from saving the file.
-func save_settings(to_path: String = SETTINGS_FILE_PATH) -> int:
+func save_settings(to_path: String = "") -> int:
+	if to_path == "":
+		to_path = AppPaths.settings_file()
 	var config_file := ConfigFile.new()
 	
 	config_file.set_value("performance", "framerate", Engine.physics_ticks_per_second)
@@ -87,13 +93,15 @@ func save_settings(to_path: String = SETTINGS_FILE_PATH) -> int:
 ## [param from_path].
 func get_controller_settings(
 	controller_name: String,
-	from_path := CONTROLLER_SETTINGS_PATH
+	from_path := ""
 ) -> ControllerSettings:
 	var output := load(
 		_DEFAULT_CONTROLLER_SETTINGS.get(controller_name, "res://controller_defaults/default.tres")
 	) as ControllerSettings
 	if not is_instance_valid(_controller_settings):
 		_controller_settings = ConfigFile.new()
+		if from_path == "":
+			from_path = AppPaths.controller_settings_file()
 		_controller_settings.load(from_path)
 	
 	if _controller_settings.has_section(controller_name):
@@ -146,7 +154,9 @@ func get_controller_settings(
 
 ## Save controller settings at the location [param to_path]. Returns the error code from saving the
 ## file.
-func save_controller_settings(to_path := CONTROLLER_SETTINGS_PATH) -> int:
+func save_controller_settings(to_path := "") -> int:
+	if to_path == "":
+		to_path = AppPaths.controller_settings_file()
 	if is_instance_valid(_controller_settings):
 		return _controller_settings.save(to_path)
 	else:

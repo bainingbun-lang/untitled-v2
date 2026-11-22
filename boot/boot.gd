@@ -1,6 +1,7 @@
 extends Node
 
 const RemoteLog = preload("res://debug/remote_log.gd")
+const ModPacks = preload("res://mods/mod_packs.gd")
 
 func _ready():
 	RemoteLog.crumb("BOOT: _ready start")
@@ -44,9 +45,11 @@ func _initialize_xr():
 	
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	
-	status_label.text = "XR listo. Cargando demo_room..."
+	status_label.text = "XR listo. Cargando menú..."
 	print("Boot: XR initialized successfully, loading demo_room")
 	
+	var mounted = ModPacks.mount_all()
+	RemoteLog.crumb("BOOT: mods montados %d" % mounted.size())
 	RemoteLog.crumb("BOOT: before change_scene")
-	await get_tree().change_scene_to_file("res://sandbox/sandbox.tscn")
+	await get_tree().change_scene_to_file("res://menu/main_menu.tscn")
 	RemoteLog.crumb("BOOT: after change_scene")
