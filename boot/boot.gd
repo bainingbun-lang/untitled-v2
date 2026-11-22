@@ -19,7 +19,7 @@ func _initialize_xr():
 	
 	if not xr_interface:
 		status_label.text = "ERROR: OpenXR interface not found"
-		print("Boot: OpenXR interface not found")
+		print("Boot: OpenXR interface not found"); RemoteLog.crumb("BOOT: FALLO interfaz OpenXR no encontrada")
 		return
 	
 	status_label.text = "Inicializando OpenXR..."
@@ -27,7 +27,7 @@ func _initialize_xr():
 	var init_result = xr_interface.initialize()
 	if not init_result:
 		status_label.text = "ERROR: Failed to initialize OpenXR"
-		print("Boot: Failed to initialize OpenXR")
+		print("Boot: Failed to initialize OpenXR"); RemoteLog.crumb("BOOT: FALLO initialize OpenXR")
 		return
 	
 	RemoteLog.crumb("BOOT: XR initialized")
