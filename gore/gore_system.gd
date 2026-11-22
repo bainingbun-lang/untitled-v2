@@ -116,15 +116,15 @@ static func blood_spray(parent: Node, point: Vector3, normal: Vector3) -> GPUPar
 	var process := ParticleProcessMaterial.new()
 	process.direction = dir
 	process.spread = 20.0
-	process.initial_velocity_min = 1.5
-	process.initial_velocity_max = 3.0
+	process.initial_velocity_min = 2.5
+	process.initial_velocity_max = 5.0
 	process.gravity = Vector3(0.0, -9.8, 0.0)
 	process.scale_min = 0.25
 	process.scale_max = 0.6
 	var particles := GPUParticles3D.new()
 	particles.name = "BloodSpray"
-	particles.amount = 10 if is_extreme() else 6
-	particles.lifetime = 0.3
+	particles.amount = 22 if is_extreme() else 14
+	particles.lifetime = 0.4
 	particles.one_shot = true
 	particles.explosiveness = 0.9
 	particles.process_material = process
@@ -134,6 +134,37 @@ static func blood_spray(parent: Node, point: Vector3, normal: Vector3) -> GPUPar
 	parent.add_child(particles)
 	particles.global_position = point
 	particles.emitting = true
+	_active_particles.append(particles)
+	_enforce_active_particle_limit()
+	return particles
+
+
+## Thin stream of droplets falling from a fresh wound for ~2 s (shortcut: no floor splat, drops just fall and vanish).
+static func blood_drip(parent: Node, point: Vector3) -> GPUParticles3D:
+	if not gore_enabled() or parent == null or not parent.is_inside_tree():
+		return null
+	if WoundDecalsScript.get_active_particle_limit() <= 0:
+		return null
+	var process := ParticleProcessMaterial.new()
+	process.direction = Vector3.DOWN
+	process.spread = 8.0
+	process.initial_velocity_min = 0.2
+	process.initial_velocity_max = 0.6
+	process.gravity = Vector3(0.0, -9.8, 0.0)
+	process.scale_min = 0.5
+	process.scale_max = 0.9
+	var particles := GPUParticles3D.new()
+	particles.name = "BloodDrip"
+	particles.amount = 8
+	particles.lifetime = 1.0
+	particles.one_shot = true
+	particles.process_material = process
+	particles.draw_pass_1 = _get_blood_mesh()
+	particles.material_override = _get_blood_material()
+	parent.add_child(particles)
+	particles.global_position = point
+	particles.emitting = true
+	parent.get_tree().create_timer(2.5).timeout.connect(particles.queue_free)
 	_active_particles.append(particles)
 	_enforce_active_particle_limit()
 	return particles

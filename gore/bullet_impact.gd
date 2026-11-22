@@ -15,6 +15,7 @@ static func apply(collider: Object, point: Vector3, normal: Vector3, damage: flo
 	if collider is Node and ((collider as Node).is_in_group("damageable") or collider is RigidBody3D):
 		GoreSystem.create_bullet_wound(collider, point, normal)
 		GoreSystem.blood_spray(collider, point, normal)
+		GoreSystem.blood_drip(collider, point)
 		if collider.has_method("take_damage"):
 			_try_exit_wound(collider as Node, point, normal)
 

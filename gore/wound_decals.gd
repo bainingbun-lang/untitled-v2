@@ -25,6 +25,7 @@ static var _trails: Array = []
 static var _decal_materials: Dictionary = {}
 static var _puddle_material = null
 static var _decal_texture = null
+static var _splat_texture = null
 static var _limb_trail_material = null
 
 static var _decal_limit: int = 96
@@ -540,7 +541,7 @@ static func _get_surface_decal_material(decal_type: String) -> Material:
 			material.albedo_color = Color(0.28, 0.008, 0.008, 0.65)
 		_:
 			material.albedo_color = Color(0.3, 0.01, 0.01, 0.7)
-	material.albedo_texture = _get_decal_texture()
+	material.albedo_texture = (_get_splat_texture() if (decal_type.begins_with("splatter") or decal_type == "trail") else _get_decal_texture())
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	material.roughness = 1.0
 	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
@@ -574,6 +575,31 @@ static func _get_decal_texture() -> Texture2D:
 		texture.height = 64
 		_decal_texture = texture
 	return _decal_texture
+
+
+## Irregular blob with ragged edge and droplets, so splatters don't read as squares.
+static func _get_splat_texture() -> Texture2D:
+	if _splat_texture == null:
+		var size := 64
+		var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 7741
+		var harmonics: Array = []
+		for k in 6:
+			harmonics.append([rng.randf_range(0.03, 0.09), float(k + 2), rng.randf_range(0.0, TAU)])
+		for y in size:
+			for x in size:
+				var dx := (x + 0.5) / size * 2.0 - 1.0
+				var dy := (y + 0.5) / size * 2.0 - 1.0
+				var r := sqrt(dx * dx + dy * dy)
+				var ang := atan2(dy, dx)
+				var edge := 0.5
+				for h in harmonics:
+					edge += h[0] * sin(h[1] * ang + h[2])
+				var a := clampf((edge - r) / 0.08, 0.0, 1.0)
+				img.set_pixel(x, y, Color(1.0, 1.0, 1.0, a))
+		_splat_texture = ImageTexture.create_from_image(img)
+	return _splat_texture
 
 
 static func wound_count() -> int:

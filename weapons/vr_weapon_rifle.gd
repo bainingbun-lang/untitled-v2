@@ -30,11 +30,11 @@ func let_go(starting_linear_velocity: Vector3 = Vector3.ZERO) -> void:
 	if has_node("Scope"):
 		$Scope.render_target_update_mode = SubViewport.UPDATE_DISABLED
 
-func button_pressed(button: int) -> void:
-	if button == 1:
+func button_pressed(action: String) -> void:
+	if action == "ax_button":
 		if has_node("Scope/Camera"):
 			$Scope/Camera.fov = clamp($Scope/Camera.fov + 1, 1, 6)
-	if button == 7:
+	if action == "by_button":
 		if has_node("Scope/Camera"):
 			$Scope/Camera.fov = clamp($Scope/Camera.fov - 1, 1, 6)
 	

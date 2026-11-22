@@ -22,6 +22,8 @@ signal weapon_action(action_name: String)
 var drawn: bool = false
 var reload: WeaponReload = WeaponReload.new(magazine_size)
 var _next_fire_ms: int = 0
+## Physics space is not queryable until the first physics frame (Quest startup error).
+var physics_ready: bool = false
 
 @export var rumble: float = 0.0:
 	set = set_rumble, get = get_rumble
@@ -62,10 +64,21 @@ func holster_draw() -> void:
 func pick_up(by: Node, with_controller: XRController3D) -> void:
 	super(by, with_controller)
 	draw()
+	if not with_controller.button_pressed.is_connected(_on_hand_button):
+		with_controller.button_pressed.connect(_on_hand_button)
 
 func let_go(starting_linear_velocity: Vector3 = Vector3.ZERO) -> void:
+	if is_instance_valid(by_controller) and by_controller.button_pressed.is_connected(_on_hand_button):
+		by_controller.button_pressed.disconnect(_on_hand_button)
 	super(starting_linear_velocity)
 	drawn = false
+
+## Manual reload on the holding hand. Mapping: A (ax_button) pulls the magazine, B (by_button) racks the slide.
+func _on_hand_button(action: String) -> void:
+	if action == "ax_button":
+		eject_magazine()
+	elif action == "by_button":
+		rack_slide()
 
 func eject_magazine() -> bool:
 	return reload.eject_magazine()
@@ -83,7 +96,13 @@ func rack_slide() -> void:
 func is_chambered() -> bool:
 	return reload.chambered
 
+func _physics_process(_delta: float) -> void:
+	physics_ready = true
+	set_physics_process(false)
+
 func action() -> void:
+	if not physics_ready:
+		return
 	if not drawn or (has_node("AnimationPlayer") and $AnimationPlayer.is_playing()):
 		return
 	var now: int = Time.get_ticks_msec()
@@ -124,7 +143,7 @@ func _play_sound(node_name: String) -> void:
 		player.play()
 
 func _process(delta: float) -> void:
-	if has_node("Aim/Target_dot") and $Aim.is_colliding():
+	if physics_ready and has_node("Aim/Target_dot") and $Aim.is_colliding():
 		$Aim/Target_dot.global_transform.origin = $Aim.get_collision_point()
 		$Aim/Target_dot.visible = true
 	else:
