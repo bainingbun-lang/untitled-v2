@@ -130,7 +130,7 @@ func _process(_delta: float) -> void:
 
 
 func _on_button(action: String, controller: XRController3D, pressed: bool) -> void:
-	if action != "trigger_click":
+	if action != "grab" and action != "trigger_click":
 		return
 	var hit := _ray_panel(controller)
 	if hit.is_empty():
