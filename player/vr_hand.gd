@@ -29,6 +29,7 @@ func _physics_process(delta: float) -> void:
 	velocity = (global_transform.origin - _previous_position) / delta
 	_previous_position = global_transform.origin
 	_check_punch()
+	_update_npc_grab()
 
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
@@ -78,3 +79,38 @@ func _check_punch() -> void:
 		_punch_last[body] = now
 		var zone := "head" if global_position.y > (body as Node3D).global_position.y + 1.3 else "torso"
 		NpcImpact.apply(body, global_position, -velocity.normalized(), speed, zone)
+
+
+## Agarre de NPC: con grip sobre un NPC, la mano lo sostiene. Si la mano lo estrella contra
+## algo sólido a más de SLAM_MIN_SPEED, recibe impacto en la cabeza y se suelta.
+const SLAM_MIN_SPEED := 4.0
+var _grabbed_npc: Node3D = null
+var _grab_offset := Vector3.ZERO
+
+
+func _update_npc_grab() -> void:
+	var gripping := _controller != null and _controller.is_button_pressed("grip_click")
+	if not gripping:
+		_grabbed_npc = null
+		return
+	if _grabbed_npc == null:
+		for body in get_colliding_bodies():
+			if body.has_method("take_damage") and body is Node3D:
+				_grabbed_npc = body
+				_grab_offset = (body as Node3D).global_position - global_position
+				break
+		return
+	if not is_instance_valid(_grabbed_npc):
+		_grabbed_npc = null
+		return
+	(_grabbed_npc as Node3D).global_position = global_position + _grab_offset
+	if _grabbed_npc is CharacterBody3D:
+		(_grabbed_npc as CharacterBody3D).velocity = Vector3.ZERO
+	var speed := velocity.length()
+	if speed < SLAM_MIN_SPEED:
+		return
+	for body in get_colliding_bodies():
+		if body is StaticBody3D:
+			NpcImpact.apply(_grabbed_npc, global_position, -velocity.normalized(), speed, "head")
+			_grabbed_npc = null
+			return
