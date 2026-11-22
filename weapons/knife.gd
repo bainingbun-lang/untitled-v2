@@ -112,6 +112,8 @@ func _decapitate(body: Node3D, point: Vector3, normal: Vector3) -> bool:
 				break
 	if skeleton != null and head >= 0:
 		GoreSystem.dismember_limb(body, head, skeleton, point, normal, "clean")
+		# Charco bajo la cabeza cortada (shortcut: altura de piso fija, igual que el goteo).
+		GoreSystem.create_puddle(body, Vector3(point.x, 0.53, point.z), Vector3.UP, 0.3)
 	body.take_damage(100000.0, point, self, "head")
 	GoreSystem.blood_spray(body, point, normal)
 	GoreSystem.blood_drip(body, point)
