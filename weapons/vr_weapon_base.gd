@@ -8,6 +8,9 @@ extends RigidBody3D
 ## Set hold mode
 @export var press_to_hold: bool = true
 @export var reset_transform_on_pickup: bool = true
+## Agarre libre: el arma conserva el punto donde la mano la tomó (culata, cargador, cañón...).
+## Con false vuelve al punto de agarre fijo (center_pickup_on_node).
+@export var free_grab: bool = true
 @export var center_pickup_on: NodePath = NodePath()
 @export var highlight_mesh_instance: NodePath = NodePath()
 @export var picked_up_layer: int = 0
@@ -77,7 +80,11 @@ func pick_up(by: Node, with_controller: XRController3D) -> void:
 	original_parent.remove_child(self)
 	picked_up_by.add_child(self)
 
-	if reset_transform_on_pickup:
+	if free_grab:
+		## Agarre libre: mantiene la pose en el momento de agarrar, relativa a la mano.
+		global_transform = original_transform
+		transform = with_controller.global_transform.inverse() * original_transform if with_controller else transform
+	elif reset_transform_on_pickup:
 		if center_pickup_on_node:
 			transform = center_pickup_on_node.global_transform.inverse() * global_transform
 		else:
