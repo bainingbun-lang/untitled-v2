@@ -33,6 +33,7 @@ const ROLE_HOSTILE: String = "hostile"
 const ROLE_CIVILIAN: String = "civilian"
 const ROLE_DEFENDER: String = "defender"
 const ROLE_ZOMBIE: String = "zombie"
+const ZOMBIE_CHASE_RANGE: float = 14.0
 
 const DEFAULT_VISION_RANGE: float = 18.0
 const DEFAULT_PATROL_SPEED: float = 2.0
@@ -297,6 +298,10 @@ func tick(delta: float) -> Dictionary:
 		if _fire_cooldown <= 0.0:
 			_fire_cooldown = FIRE_INTERVAL
 			_shoot(target_pos)
+	elif role == ROLE_ZOMBIE and visible and distance <= ZOMBIE_CHASE_RANGE:
+		# Zombi: se acerca lento al jugador en línea recta, sin armas ni huida.
+		action = ACTION_WANDER
+		goal = target_pos
 	elif _flee_time > 0.0:
 		_flee_time -= step
 		action = ACTION_FLEE
