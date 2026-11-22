@@ -1,5 +1,9 @@
 class_name VRHand extends RigidBody3D
 
+const NpcImpact = preload("res://gore/npc_impact.gd")
+const PUNCH_MIN_SPEED := 3.0
+const PUNCH_COOLDOWN := 0.35
+
 
 @export var controller: NodePath
 
@@ -24,6 +28,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	velocity = (global_transform.origin - _previous_position) / delta
 	_previous_position = global_transform.origin
+	_check_punch()
 
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
@@ -54,3 +59,22 @@ func _contact_is_on_lower_corner(local_position: Vector3) -> bool:
 	local_position.x = absf(local_position.x)
 	local_position.z = absf(local_position.z)
 	return local_position.is_equal_approx(_positive_corner)
+
+
+## Golpe con la mano a un NPC: la velocidad de la mano decide el daño (ver gore/npc_impact.gd).
+var _punch_last := {}
+
+
+func _check_punch() -> void:
+	var speed := velocity.length()
+	if speed < PUNCH_MIN_SPEED:
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	for body in get_colliding_bodies():
+		if not body.has_method("take_damage"):
+			continue
+		if now - float(_punch_last.get(body, -10.0)) < PUNCH_COOLDOWN:
+			continue
+		_punch_last[body] = now
+		var zone := "head" if global_position.y > (body as Node3D).global_position.y + 1.3 else "torso"
+		NpcImpact.apply(body, global_position, -velocity.normalized(), speed, zone)
