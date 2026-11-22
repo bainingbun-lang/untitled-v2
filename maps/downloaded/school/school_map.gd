@@ -5,9 +5,14 @@ func model_path() -> String:
 	return "res://maps/downloaded/school/school.glb"
 
 
+func model_scale() -> float:
+	return 1.0
+
+
 ## Escuela: vigilancia de seguridad (defensores sin arma) y alumnos/personal pacíficos.
-func npc_spec() -> Array:
+func npc_spec(total: int) -> Array:
+	var guards := maxi(2, int(round(total * 0.2)))
 	return [
-		{"id": "guardia", "role": "defender", "armed": false, "count": 2},
-		{"id": "civil", "role": "civilian", "count": 5},
+		{"id": "guardia", "role": "defender", "armed": false, "count": guards},
+		{"id": "civil", "role": "civilian", "count": maxi(0, total - guards)},
 	]

@@ -13,6 +13,10 @@ static var gore_level: int = 1
 ## Arma del bolsillo izquierdo (se saca con la mano izquierda).
 const POCKET_WEAPONS := ["pistol", "ak47", "knife", "sniper", "machete"]
 static var left_pocket: String = "pistol"
+## Relleno de NPC por m² de mapa, y zombis en lugar de algunos civiles.
+const DENSITY_PER_M2 := {"bajo": 0.08, "medio": 0.16, "alto": 0.3}
+static var density: String = "medio"
+static var zombies: bool = false
 
 
 static func npc_damage_scale() -> float:
@@ -26,6 +30,8 @@ static func load_config() -> void:
 	difficulty = str(cf.get_value(SECTION, "difficulty", "normal"))
 	gore_level = int(cf.get_value(SECTION, "gore_level", 1))
 	left_pocket = str(cf.get_value(SECTION, "left_pocket", "pistol"))
+	density = str(cf.get_value(SECTION, "density", "medio"))
+	zombies = bool(cf.get_value(SECTION, "zombies", false))
 	if not POCKET_WEAPONS.has(left_pocket):
 		left_pocket = "pistol"
 	GoreScript.set_gore_level(gore_level)
@@ -37,6 +43,8 @@ static func save_config() -> int:
 	cf.set_value(SECTION, "difficulty", difficulty)
 	cf.set_value(SECTION, "gore_level", gore_level)
 	cf.set_value(SECTION, "left_pocket", left_pocket)
+	cf.set_value(SECTION, "density", density)
+	cf.set_value(SECTION, "zombies", zombies)
 	return cf.save(AppPaths.settings_file())
 
 
@@ -53,3 +61,7 @@ static func set_gore(level: int) -> void:
 static func set_left_pocket(weapon_id: String) -> void:
 	if POCKET_WEAPONS.has(weapon_id):
 		left_pocket = weapon_id
+
+
+static func density_per_m2() -> float:
+	return float(DENSITY_PER_M2.get(density, 0.16))

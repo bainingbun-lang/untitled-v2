@@ -12,6 +12,8 @@ func _ready() -> void:
 		push_warning("Mapa: no se pudo cargar " + model_path())
 		return
 	add_child(house)
+	_model = house
+	house.scale = Vector3.ONE * model_scale()
 	for mi in house.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).create_trimesh_collision()
 	_add_ground()
@@ -28,6 +30,11 @@ static func _load_glb(path: String) -> Node3D:
 	if gltf.append_from_buffer(bytes, "", state) != OK:
 		return null
 	return gltf.generate_scene(state) as Node3D
+
+
+## Escala del modelo. La casa de prueba mide ~2 m, así que se agranda a escala humana.
+func model_scale() -> float:
+	return 4.0
 
 
 ## Ruta del modelo del mapa; cada mapa descargado la sobrescribe.
@@ -47,24 +54,36 @@ func _add_ground() -> void:
 	add_child(body)
 
 
-## Reparto de NPC del mapa. Un mapa lo sobrescribe para poner su propia población.
-func npc_spec() -> Array:
-	return [
-		{"id": "npc_armed", "role": "hostile", "armed": true, "count": 3},
-		{"id": "npc_civil", "role": "civilian", "count": 4},
-	]
+## Reparto de NPC del mapa. Un mapa puede sobrescribirlo; por defecto se calcula por área.
+func npc_spec(total: int) -> Array:
+	return NpcSpawner.default_spec(total)
+
+
+## Piso del mapa como rectángulo (XZ) a partir de las mallas del modelo.
+var _model: Node3D = null
+
+
+func footprint() -> Array:
+	var lo: Vector3 = Vector3(INF, INF, INF)
+	var hi: Vector3 = Vector3(-INF, -INF, -INF)
+	if _model == null:
+		return [Vector2.ZERO, Vector2.ZERO]
+	for mi in _model.find_children("*", "MeshInstance3D", true, false):
+		var box: AABB = (mi as MeshInstance3D).global_transform * (mi as MeshInstance3D).get_aabb()
+		lo = lo.min(box.position)
+		hi = hi.max(box.position + box.size)
+	return [Vector2(lo.x, lo.z), Vector2(hi.x, hi.z)]
 
 
 func _spawn_npcs() -> void:
-	var points: Array = [
-		Vector3(2, 0.5, 2), Vector3(-3, 0.5, -1), Vector3(-2.5, 0.5, 2.5),
-		Vector3(2.5, 0.5, -2.5), Vector3(0, 0.5, -3), Vector3(-1, 0.5, 3), Vector3(3, 0.5, 0),
-	]
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var fp := footprint()
+	var area: float = (fp[1].x - fp[0].x) * (fp[1].y - fp[0].y)
+	var total := NpcSpawner.count_for_area(area)
+	var space := get_world_3d().direct_space_state
+	var points := NpcSpawner.floor_points(space, fp[0], fp[1], total, [])
 	var eye := get_node_or_null("VRPlayer/CharacterBody3D/Origin/Camera") as Node3D
-	var spec := npc_spec()
-	var total := 0
-	for e in spec:
-		total += int(e.get("count", 1))
-	if total > MAX_NPCS:
-		push_warning("Mapa: se pidieron %d NPC, el máximo es %d" % [total, MAX_NPCS])
+	var spec := npc_spec(points.size())
 	NpcSpawner.spawn(self, spec, points, eye)
+	print("Mapa: area %.0f m2, NPC pedidos %d, colocados %d" % [area, total, points.size()])
