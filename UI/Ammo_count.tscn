@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://assets/fonts101.com/scified2002italic.ttf" type="FontFile" id=1]
+
+
+[sub_resource type="FontFile" id=1]
+size = 200
+font_data = ExtResource( 1 )
+
+[node name="Ammo_count" type="Label"]
+offset_right = 256.0
+offset_bottom = 256.0
+theme_override_fonts/font = SubResource( 1 )
+text = "12"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}

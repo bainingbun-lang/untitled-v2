@@ -1,0 +1,30 @@
+extends SubViewport
+
+@export var target_fps = 90
+@export var zoom = 1.3
+var simulate_fps = 0.0
+
+func set_viewport_texture(p_texture):
+	$"VR-Preview".texture = p_texture
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	_on_resize()
+	get_tree().get_root().connect("size_changed", Callable(self, "_on_resize"))
+
+func _on_resize():
+	size = get_window().get_size()
+
+func _process(delta):
+	simulate_fps += delta
+	if simulate_fps > (1.0 / target_fps):
+		simulate_fps = 0.0
+		render_target_update_mode = SubViewport.UPDATE_ONCE
+	
+	if $"VR-Preview".texture:
+		var texture_size = $"VR-Preview".texture.get_size()
+		var texture_scale = size.x / texture_size.x
+		var new_size = zoom * texture_size * texture_scale
+		if $"VR-Preview".size != new_size:
+			$"VR-Preview".size = texture_size * texture_scale
+			$"VR-Preview".position = (size - $"VR-Preview".size) * 0.5
