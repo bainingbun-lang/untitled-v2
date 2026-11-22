@@ -24,4 +24,6 @@ static func apply(npc: Node, point: Vector3, normal: Vector3, speed: float, zone
 	if speed >= OPEN_WOUND_SPEED:
 		GoreSystem.blood_spray(npc, point, normal)
 		GoreSystem.blood_drip(npc, point)
+		# Rastro en el piso: la sangre baja desde la herida hasta el suelo.
+		GoreSystem.create_blood_trail(npc, point, point + Vector3.DOWN * 1.2)
 	return {"damage": damage, "wounded": wounded, "open": speed >= OPEN_WOUND_SPEED}

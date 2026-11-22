@@ -115,4 +115,5 @@ func _decapitate(body: Node3D, point: Vector3, normal: Vector3) -> bool:
 	body.take_damage(100000.0, point, self, "head")
 	GoreSystem.blood_spray(body, point, normal)
 	GoreSystem.blood_drip(body, point)
+	GoreSystem.create_blood_trail(body, point, point + Vector3.DOWN * 1.2)
 	return true
