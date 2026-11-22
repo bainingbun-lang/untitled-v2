@@ -192,10 +192,10 @@ func _equip_weapon() -> void:
 				th.off_hand = left)
 		inventory.add(GameConfig.left_pocket)
 		holster.drawn.connect(func() -> void:
-			if inventory.right.id.is_empty() and not inventory.equip_right("ak47"):
-				inventory.hold_existing(inventory.right, "ak47", _weapon_pickable))
+			if inventory.right.id.is_empty() and not inventory.equip_right(GameConfig.right_pocket):
+				inventory.hold_existing(inventory.right, GameConfig.right_pocket, _weapon_pickable))
 		controller.button_released.connect(func(action: String) -> void:
-			if action == "grip_click" and inventory.right.id == "ak47" \
+			if action == "grip_click" and inventory.right.id == GameConfig.right_pocket \
 					and controller.global_position.distance_to(holster.global_position) < holster.radius:
 				inventory.stow(inventory.right))
 		# Bolsillo izquierdo: se saca con la mano izquierda y se guarda apretando el grip cerca de la cadera.
@@ -225,7 +225,7 @@ func _equip_weapon() -> void:
 
 
 func _create_weapon_ak(player: Node3D) -> Node3D:
-	var weapon := (load("res://weapons/ak47.tscn") as PackedScene).instantiate() as Node3D
+	var weapon := (load(inventory_scene(GameConfig.right_pocket)) as PackedScene).instantiate() as Node3D
 	add_child(weapon)
 	weapon.global_position = player.global_position + Vector3(0.35, 1.0, -0.25)
 	return weapon
@@ -264,3 +264,9 @@ func _process(_delta: float) -> void:
 		RemoteLog.crumb("SANDBOX: frame 1")
 	elif frame == 60:
 		RemoteLog.crumb("SANDBOX: frame 60")
+
+
+## Ruta de escena de un arma por id (misma tabla que el inventario).
+static func inventory_scene(id: String) -> String:
+	var table := {"ak47": "res://weapons/ak47.tscn", "pistol": "res://weapons/pistol.tscn", "knife": "res://weapons/knife.tscn", "sniper": "res://weapons/sniper.tscn", "machete": "res://weapons/machete.tscn", "shotgun": "res://weapons/shotgun.tscn", "barrett": "res://weapons/barrett.tscn", "smg": "res://weapons/smg.tscn"}
+	return str(table.get(id, "res://weapons/ak47.tscn"))

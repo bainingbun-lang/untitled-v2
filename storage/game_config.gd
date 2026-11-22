@@ -13,6 +13,8 @@ static var gore_level: int = 1
 ## Arma del bolsillo izquierdo (se saca con la mano izquierda).
 const POCKET_WEAPONS := ["pistol", "ak47", "knife", "sniper", "machete", "shotgun", "barrett", "smg"]
 static var left_pocket: String = "pistol"
+## Arma del bolsillo derecho (se saca con la mano derecha).
+static var right_pocket: String = "ak47"
 ## Relleno de NPC por m² de mapa, y zombis en lugar de algunos civiles.
 const DENSITY_PER_M2 := {"bajo": 0.08, "medio": 0.16, "alto": 0.3}
 static var density: String = "medio"
@@ -30,6 +32,9 @@ static func load_config() -> void:
 	difficulty = str(cf.get_value(SECTION, "difficulty", "normal"))
 	gore_level = int(cf.get_value(SECTION, "gore_level", 1))
 	left_pocket = str(cf.get_value(SECTION, "left_pocket", "pistol"))
+	right_pocket = str(cf.get_value(SECTION, "right_pocket", "ak47"))
+	if not POCKET_WEAPONS.has(right_pocket):
+		right_pocket = "ak47"
 	density = str(cf.get_value(SECTION, "density", "medio"))
 	zombies = bool(cf.get_value(SECTION, "zombies", false))
 	if not POCKET_WEAPONS.has(left_pocket):
@@ -43,6 +48,7 @@ static func save_config() -> int:
 	cf.set_value(SECTION, "difficulty", difficulty)
 	cf.set_value(SECTION, "gore_level", gore_level)
 	cf.set_value(SECTION, "left_pocket", left_pocket)
+	cf.set_value(SECTION, "right_pocket", right_pocket)
 	cf.set_value(SECTION, "density", density)
 	cf.set_value(SECTION, "zombies", zombies)
 	return cf.save(AppPaths.settings_file())

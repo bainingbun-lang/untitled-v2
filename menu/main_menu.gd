@@ -260,6 +260,14 @@ func _show_settings() -> void:
 	pocket.item_selected.connect(func(i: int) -> void: GameConfig.set_left_pocket(keys[i]); _save())
 	_content.add_child(_setting_row("Bolsillo izquierdo", pocket))
 
+	var rpocket := OptionButton.new()
+	for i in keys.size():
+		rpocket.add_item(POCKET_LABELS.get(keys[i], keys[i]), i)
+		if keys[i] == GameConfig.right_pocket:
+			rpocket.select(i)
+	rpocket.item_selected.connect(func(i: int) -> void: GameConfig.right_pocket = keys[i]; _save())
+	_content.add_child(_setting_row("Bolsillo derecho", rpocket))
+
 	_content.add_child(_spacer_v())
 	_content.add_child(_heading("Población"))
 	var dens := OptionButton.new()
