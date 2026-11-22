@@ -20,5 +20,6 @@ run() {
 run "mods (zip, activar, quitar)" res://tests/test_mod_packs.gd "RESULTADO: OK"
 run "armas (recarga, disparo, cadencia)" res://weapons/test_weapon_handling.gd "PASS ("
 run "arsenal (todas las armas cargan)" res://tests/test_arsenal.gd "RESULTADO: OK"
+run "reacciones (alarma al caer un NPC)" res://tests/test_reactions.gd "RESULTADO: OK"
 run "combate (perdigones, cabeza)" res://tests/test_combat.gd "RESULTADO: OK"
 exit $fail
