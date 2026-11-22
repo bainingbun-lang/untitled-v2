@@ -11,6 +11,8 @@ static func fire(point: Node3D) -> void:
 	if point == null or not point.is_inside_tree():
 		return
 	var parent: Node = point.get_tree().current_scene
+	if parent == null:
+		parent = point.get_tree().root
 	var smoke: Node3D = SMOKE.instantiate()
 	parent.add_child(smoke)
 	smoke.global_transform = point.global_transform
