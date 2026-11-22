@@ -92,6 +92,10 @@ func _shout(npc: Node, text: String) -> void:
 	label.outline_size = 8
 	label.position = Vector3(0, 2.1, 0)
 	n.add_child(label)
-	get_tree().create_timer(SHOUT_TIME).timeout.connect(func() -> void:
-		if is_instance_valid(label):
-			label.queue_free())
+	get_tree().create_timer(SHOUT_TIME).timeout.connect(_remove_shout.bind(weakref(label)))
+
+
+func _remove_shout(ref: WeakRef) -> void:
+	var label := ref.get_ref() as Node
+	if label != null:
+		label.queue_free()
