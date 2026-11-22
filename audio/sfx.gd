@@ -46,6 +46,18 @@ static func _make(key: String, seconds: float, fn: Callable) -> AudioStreamWAV:
 	return wav
 
 
+## Carga un WAV real del proyecto (sin depender de la importación).
+static func file(path: String) -> AudioStreamWAV:
+	if _cache.has(path):
+		return _cache[path]
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.is_empty():
+		return null
+	var wav := AudioStreamWAV.load_from_buffer(bytes)
+	_cache[path] = wav
+	return wav
+
+
 ## Reproduce un sonido 3D en una posición del mundo; se libera al terminar.
 static func play_at(parent: Node, stream: AudioStream, pos: Vector3) -> void:
 	if parent == null or not parent.is_inside_tree():

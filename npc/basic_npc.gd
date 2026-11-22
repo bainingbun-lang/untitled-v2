@@ -1,6 +1,8 @@
 class_name BasicNpc
 extends CharacterBody3D
 const GameConfig = preload("res://storage/game_config.gd")
+const Sfx = preload("res://audio/sfx.gd")
+const SHOT_SOUND_PATH := "res://weapons/ak47/ak47_shot.wav"
 
 signal action_changed(action: String)
 signal target_changed(source_id: String, visible: bool)
@@ -423,6 +425,9 @@ func _has_line_of_sight(point: Vector3) -> bool:
 
 
 func _shoot(point: Vector3) -> Dictionary:
+	var shot := Sfx.file(SHOT_SOUND_PATH)
+	if shot != null:
+		Sfx.play_at(self, shot, global_position)
 	_face_target()
 	var aim: Vector3 = point + Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * SHOT_SPREAD
 	var result: Dictionary = {"from": _eye_position(), "to": aim, "collider": null}
