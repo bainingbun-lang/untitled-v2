@@ -11,6 +11,7 @@ const GameConfig = preload("res://storage/game_config.gd")
 const CATALOG := "res://maps/catalog.json"
 const DIFFICULTIES := [["Fácil", "facil"], ["Normal", "normal"], ["Difícil", "dificil"]]
 const GORE_LEVELS := ["Apagado", "Normal", "Extremo"]
+const POCKET_LABELS := {"pistol": "Pistola", "ak47": "AK-47", "knife": "Cuchillo", "sniper": "Sniper", "machete": "Machete"}
 
 const BG := Color("0d1014")
 const CARD := Color("161b22")
@@ -249,6 +250,15 @@ func _show_settings() -> void:
 	diff.select(selected)
 	diff.item_selected.connect(func(i: int) -> void: GameConfig.set_difficulty(DIFFICULTIES[i][1]); _save())
 	_content.add_child(_setting_row("Dificultad", diff))
+
+	var pocket := OptionButton.new()
+	var keys: Array = GameConfig.POCKET_WEAPONS
+	for i in keys.size():
+		pocket.add_item(POCKET_LABELS.get(keys[i], keys[i]), i)
+		if keys[i] == GameConfig.left_pocket:
+			pocket.select(i)
+	pocket.item_selected.connect(func(i: int) -> void: GameConfig.set_left_pocket(keys[i]); _save())
+	_content.add_child(_setting_row("Bolsillo izquierdo", pocket))
 
 	_content.add_child(_spacer_v())
 	_content.add_child(_heading("Datos"))

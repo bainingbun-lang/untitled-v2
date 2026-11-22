@@ -7,6 +7,7 @@ const MapWorldBuilder = preload("res://maps/map_world_builder.gd")
 const HouseBuilder = preload("res://maps/house_builder.gd")
 const BasicNpc = preload("res://npc/basic_npc.gd")
 const VrWeaponHand = preload("res://weapons/vr_weapon_hand.gd")
+const GameConfig = preload("res://storage/game_config.gd")
 const FunctionPickup = preload("res://grab/function_pickup.gd")
 const InventoryScript = preload("res://inventory/inventory.gd")
 
@@ -49,7 +50,7 @@ func _build_map() -> void:
 			{"x": 5, "y": 0, "z": 5},
 			{"x": -5, "y": 0, "z": -5}
 		],
-		"time_of_day": "atardecer",
+		"time_of_day": "dia",
 		"theme": ""
 	}
 	
@@ -168,6 +169,16 @@ func _equip_weapon() -> void:
 	holster.weapon = _weapon_pickable
 	origin.add_child(holster)
 	holster.position = Vector3(0.25, 0.8, 0.0)
+	# Funda visible en la cadera: sin esto el arma enfundada parece flotar.
+	var pouch := MeshInstance3D.new()
+	var pouch_mesh := BoxMesh.new()
+	pouch_mesh.size = Vector3(0.1, 0.14, 0.06)
+	pouch.mesh = pouch_mesh
+	var leather := StandardMaterial3D.new()
+	leather.albedo_color = Color(0.13, 0.1, 0.08)
+	leather.roughness = 0.9
+	pouch.material_override = leather
+	holster.add_child(pouch)
 	_weapon_pickable.global_position = holster.global_position
 
 	if left != null:
@@ -179,7 +190,7 @@ func _equip_weapon() -> void:
 			var th: Node = inventory.right.weapon.get_node_or_null("TwoHanded") if is_instance_valid(inventory.right.weapon) else null
 			if th:
 				th.off_hand = left)
-		inventory.add("pistol")
+		inventory.add(GameConfig.left_pocket)
 		holster.drawn.connect(func() -> void:
 			if inventory.right.id.is_empty() and not inventory.equip_right("ak47"):
 				inventory.hold_existing(inventory.right, "ak47", _weapon_pickable))
@@ -187,6 +198,27 @@ func _equip_weapon() -> void:
 			if action == "grip_click" and inventory.right.id == "ak47" \
 					and controller.global_position.distance_to(holster.global_position) < holster.radius:
 				inventory.stow(inventory.right))
+		# Bolsillo izquierdo: se saca con la mano izquierda y se guarda apretando el grip cerca de la cadera.
+		var left_holster := Holster.new()
+		left_holster.controller = left
+		origin.add_child(left_holster)
+		left_holster.position = Vector3(-0.25, 0.8, 0.0)
+		var left_pouch := MeshInstance3D.new()
+		var left_pouch_mesh := BoxMesh.new()
+		left_pouch_mesh.size = Vector3(0.1, 0.14, 0.06)
+		left_pouch.mesh = left_pouch_mesh
+		var left_leather := StandardMaterial3D.new()
+		left_leather.albedo_color = Color(0.13, 0.1, 0.08)
+		left_leather.roughness = 0.9
+		left_pouch.material_override = left_leather
+		left_holster.add_child(left_pouch)
+		left_holster.drawn.connect(func() -> void:
+			if inventory.left.id.is_empty():
+				inventory.equip_left(GameConfig.left_pocket))
+		left.button_released.connect(func(action: String) -> void:
+			if action == "grip_click" and not inventory.left.id.is_empty() \
+					and left.global_position.distance_to(left_holster.global_position) < left_holster.radius:
+				inventory.stow(inventory.left))
 
 	_weapon_ok = true
 	print("Sandbox: AK47 en funda, grip en la funda para sacarla")

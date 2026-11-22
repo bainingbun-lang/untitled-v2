@@ -10,6 +10,9 @@ const SECTION := "gameplay"
 const DIFFICULTY_SCALES := {"facil": 0.5, "normal": 1.0, "dificil": 1.5}
 static var difficulty: String = "normal"
 static var gore_level: int = 1
+## Arma del bolsillo izquierdo (se saca con la mano izquierda).
+const POCKET_WEAPONS := ["pistol", "ak47", "knife", "sniper", "machete"]
+static var left_pocket: String = "pistol"
 
 
 static func npc_damage_scale() -> float:
@@ -22,6 +25,9 @@ static func load_config() -> void:
 		return
 	difficulty = str(cf.get_value(SECTION, "difficulty", "normal"))
 	gore_level = int(cf.get_value(SECTION, "gore_level", 1))
+	left_pocket = str(cf.get_value(SECTION, "left_pocket", "pistol"))
+	if not POCKET_WEAPONS.has(left_pocket):
+		left_pocket = "pistol"
 	GoreScript.set_gore_level(gore_level)
 
 
@@ -30,6 +36,7 @@ static func save_config() -> int:
 	cf.load(AppPaths.settings_file())
 	cf.set_value(SECTION, "difficulty", difficulty)
 	cf.set_value(SECTION, "gore_level", gore_level)
+	cf.set_value(SECTION, "left_pocket", left_pocket)
 	return cf.save(AppPaths.settings_file())
 
 
@@ -41,3 +48,8 @@ static func set_difficulty(value: String) -> void:
 static func set_gore(level: int) -> void:
 	gore_level = clampi(level, 0, 2)
 	GoreScript.set_gore_level(gore_level)
+
+
+static func set_left_pocket(weapon_id: String) -> void:
+	if POCKET_WEAPONS.has(weapon_id):
+		left_pocket = weapon_id
