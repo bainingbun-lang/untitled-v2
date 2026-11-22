@@ -5,13 +5,26 @@ signal action_changed(action: String)
 signal target_changed(source_id: String, visible: bool)
 signal damaged(amount: float, health: float)
 signal died(source: Node)
+signal shot_fired(hit: Dictionary)
 
 const ACTION_IDLE: String = "idle"
 const ACTION_PATROL: String = "patrol"
 const ACTION_CHASE: String = "chase"
 const ACTION_INVESTIGATE: String = "investigate"
 const ACTION_FLEE: String = "flee"
+const ACTION_WANDER: String = "wander"
+const WANDER_RADIUS: float = 6.0
+const WANDER_INTERVAL: float = 4.0
+const FLEE_DURATION: float = 8.0
 const ACTION_DEAD: String = "dead"
+const ACTION_SHOOT: String = "shoot"
+const ARMED_RANGE: float = 15.0
+const FIRE_INTERVAL: float = 0.5
+const SHOT_DAMAGE: float = 10.0
+const SHOT_SPREAD: float = 0.25
+const EYE_HEIGHT: float = 1.6
+const GUN_MODEL: String = "res://weapons/ak47/ak47.glb"
+const GUN_SOUND: String = "res://weapons/ak47/ak47_shot.wav"
 
 const ROLE_HOSTILE: String = "hostile"
 const ROLE_CIVILIAN: String = "civilian"
@@ -38,6 +51,8 @@ static var _active: Array = []
 @export var stop_distance: float = DEFAULT_STOP_DISTANCE
 @export var flee_distance: float = DEFAULT_FLEE_DISTANCE
 @export var auto_tick: bool = true
+## Armed variant: shoots the target when visible within ARMED_RANGE; never flees.
+@export var armed: bool = false
 
 var target: Node3D = null
 var aim_point: Vector3 = Vector3.ZERO
@@ -66,6 +81,12 @@ var _patrol_index: int = -1
 var _patrol_ready: bool = false
 var _last_result: Dictionary = {}
 var _source_id: String = ""
+var _flee_time: float = 0.0
+var _wander_time: float = 0.0
+var _flee_from: Vector3 = Vector3.ZERO
+var _fire_cooldown: float = 0.0
+var _gun: Node3D = null
+var _gun_sound: AudioStreamPlayer3D = null
 
 
 static func active_count() -> int:
@@ -143,10 +164,11 @@ func _build() -> void:
 		head_visual.material_override = _material
 		head_visual.position = Vector3(0.0, 1.72, 0.0)
 		add_child(head_visual)
+	_attach_gun()
 
 
 func _build_model() -> bool:
-	var scene = load("res://npc/models/%s.gltf" % MODELS.pick_random())
+	var scene = load("res://npc/models/%s.gltf" % (["police_swat", "soldier_female"] if armed else MODELS).pick_random())
 	if not scene is PackedScene:
 		return false
 	model = scene.instantiate() as Node3D
@@ -200,6 +222,9 @@ func apply_options(p_options: Dictionary) -> void:
 	stop_distance = maxf(0.0, float(p_options.get("stop_distance", stop_distance)))
 	flee_distance = maxf(1.0, float(p_options.get("flee_distance", flee_distance)))
 	auto_tick = bool(p_options.get("auto_tick", auto_tick))
+	armed = bool(p_options.get("armed", armed))
+	if _built:
+		_attach_gun()
 	health = clampf(float(p_options.get("health", health)), 0.0, max_health)
 	var points: Array = []
 	for raw in p_options.get("patrol_points", []):
@@ -261,27 +286,28 @@ func tick(delta: float) -> Dictionary:
 	if visible:
 		_alert = 1.0
 		_last_seen = target_pos
-	var action: String = ACTION_IDLE
-	if visible:
-		if role == ROLE_CIVILIAN and distance < flee_distance:
-			action = ACTION_FLEE
-			var away: Vector3 = global_position - target_pos
-			away.y = 0.0
-			var escape: Vector3 = away.normalized() if away.length_squared() > 0.0001 else Vector3.FORWARD
-			goal = global_position + escape * flee_distance
-		else:
-			action = ACTION_CHASE
-			var to_target: Vector3 = target_pos - global_position
-			to_target.y = 0.0
-			if to_target.length() > stop_distance:
-				goal = target_pos - to_target.normalized() * stop_distance
-			else:
-				goal = global_position
-	elif _alert > 0.0 and _last_seen.length_squared() > 0.0001:
-		action = ACTION_INVESTIGATE
-		goal = _last_seen
+	var action: String = ACTION_WANDER
+	_fire_cooldown = maxf(0.0, _fire_cooldown - step)
+	if armed and visible and distance <= ARMED_RANGE and _has_line_of_sight(target_pos):
+		action = ACTION_SHOOT
+		goal = global_position
+		if _fire_cooldown <= 0.0:
+			_fire_cooldown = FIRE_INTERVAL
+			_shoot(target_pos)
+	elif _flee_time > 0.0:
+		_flee_time -= step
+		action = ACTION_FLEE
+		var away: Vector3 = global_position - _flee_from
+		away.y = 0.0
+		var escape: Vector3 = away.normalized() if away.length_squared() > 0.0001 else Vector3.FORWARD
+		goal = global_position + escape * flee_distance
 	else:
-		action = _patrol_action()
+		_wander_time -= step
+		if _wander_time <= 0.0 or global_position.distance_to(goal) < ARRIVE_DISTANCE:
+			if _wander_time <= 0.0:
+				_wander_time = WANDER_INTERVAL
+				var angle: float = randf() * TAU
+				goal = global_position + Vector3(cos(angle), 0.0, sin(angle)) * randf_range(1.0, WANDER_RADIUS)
 	_set_action(action)
 	_last_result = {
 		"action": action,
@@ -310,6 +336,8 @@ func take_damage(amount: float, point: Vector3 = Vector3.ZERO, source: Node = nu
 		_last_seen = point
 	elif source is Node3D:
 		_last_seen = (source as Node3D).global_position
+	_flee_from = point if point.length_squared() > 0.0001 else ((source as Node3D).global_position if source is Node3D else global_position + Vector3.BACK)
+	_flee_time = 0.0 if armed else FLEE_DURATION
 	damaged.emit(amount, health)
 	if health > 0.0:
 		_react_hit(point, source)
@@ -355,6 +383,67 @@ func _physics_process(delta: float) -> void:
 	_move(maxf(delta, 0.0))
 
 
+func _attach_gun() -> void:
+	if not armed or _gun != null:
+		return
+	var scene = load(GUN_MODEL)
+	if not scene is PackedScene:
+		return
+	_gun = (scene as PackedScene).instantiate() as Node3D
+	_gun.name = "Gun"
+	# glb barrel is +X; rotate so it points along the NPC forward (-Z), held at chest height on the right.
+	_gun.transform = Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(0.25, 1.25, -0.25))
+	add_child(_gun)
+	_gun_sound = AudioStreamPlayer3D.new()
+	_gun_sound.name = "GunSound"
+	_gun_sound.stream = load(GUN_SOUND)
+	_gun_sound.max_polyphony = 4
+	_gun.add_child(_gun_sound)
+
+
+func _eye_position() -> Vector3:
+	return global_position + Vector3(0.0, EYE_HEIGHT, 0.0)
+
+
+## Clear if nothing blocks the ray, or what blocks it is (an ancestor of) the target or sits right at the point.
+func _has_line_of_sight(point: Vector3) -> bool:
+	if not is_inside_tree():
+		return true
+	var query := PhysicsRayQueryParameters3D.create(_eye_position(), point)
+	query.exclude = [get_rid()]
+	var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return true
+	var collider: Object = hit.get("collider")
+	if target != null and is_instance_valid(target) and collider is Node \
+			and (collider == target or (collider as Node).is_ancestor_of(target)):
+		return true
+	return (hit["position"] as Vector3).distance_to(point) < 0.5
+
+
+func _shoot(point: Vector3) -> Dictionary:
+	_face_target()
+	var aim: Vector3 = point + Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * SHOT_SPREAD
+	var result: Dictionary = {"from": _eye_position(), "to": aim, "collider": null}
+	if is_inside_tree():
+		var from: Vector3 = _eye_position()
+		var query := PhysicsRayQueryParameters3D.create(from, from + (aim - from).normalized() * (ARMED_RANGE + 2.0))
+		query.exclude = [get_rid()]
+		var hit: Dictionary = get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			result["collider"] = hit["collider"]
+			result["position"] = hit["position"]
+			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], SHOT_DAMAGE, self)
+		if _gun_sound != null and _gun_sound.is_inside_tree():
+			_gun_sound.play()
+		if _gun != null and get_tree().current_scene != null:
+			ShotFx.fire(_gun)
+	if not _play("Gun_Shoot"):
+		_play("Idle_Gun_Shoot")
+	shot_fired.emit(result)
+	return result
+
+
 func _effective_target_position() -> Vector3:
 	if has_explicit_aim:
 		return aim_point
@@ -387,13 +476,13 @@ func _move(delta: float) -> void:
 	var remaining: float = offset.length()
 	var mob: Dictionary = NpcMobility.mobility_for(leg_left_damage, leg_right_damage)
 	var speed: float = patrol_speed
-	if _action == ACTION_CHASE or _action == ACTION_FLEE:
+	if _action == ACTION_FLEE:
 		speed = run_speed
 	elif _action == ACTION_INVESTIGATE:
 		speed = maxf(patrol_speed, run_speed * 0.5)
 	speed *= float(mob["speed_factor"])
 	if mob["state"] == "crawl":
-		var away: Vector3 = global_position - (target.global_position if target != null and is_instance_valid(target) else goal)
+		var away: Vector3 = global_position - _flee_from if _flee_time > 0.0 else goal - global_position
 		away.y = 0.0
 		if away.length_squared() > 0.0001:
 			away = away.normalized()

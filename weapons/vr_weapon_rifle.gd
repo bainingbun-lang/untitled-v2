@@ -12,23 +12,23 @@ extends VrWeaponBase
 var can_shoot: bool = true
 
 func pick_up(by: Node, with_controller: XRController3D) -> void:
-	.pick_up(by, with_controller)
+	super.pick_up(by, with_controller)
 	twohanded.enabled = true
 	
 	with_controller.connect("button_pressed", Callable(self, "button_pressed"))
 	
 	if has_node("Scope"):
-		$Scope.render_target_update_mode = Viewport.UPDATE_ALWAYS
+		$Scope.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 
 func let_go(starting_linear_velocity: Vector3 = Vector3.ZERO) -> void:
 	twohanded.enabled = false
 	if picked_up_by:
 		picked_up_by.disconnect("button_pressed", Callable(self, "button_pressed"))
 	
-	.let_go(starting_linear_velocity)
+	super.let_go(starting_linear_velocity)
 	
 	if has_node("Scope"):
-		$Scope.render_target_update_mode = Viewport.UPDATE_DISABLED
+		$Scope.render_target_update_mode = SubViewport.UPDATE_DISABLED
 
 func button_pressed(button: int) -> void:
 	if button == 1:

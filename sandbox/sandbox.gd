@@ -71,10 +71,18 @@ func _spawn_npcs() -> void:
 		Vector3(2, 0.5, 2),
 		Vector3(-3, 0.5, -1)
 	]
+	var configs: Array = [
+		{"id": "npc_armed", "role": "hostile", "armed": true},
+		{"id": "npc_civil", "role": "civilian"},
+	]
+	var eye := get_node_or_null("VRPlayer/CharacterBody3D/Origin/Camera") as Node3D
 	
 	var count: int = 0
-	for pos in spawn_points:
-		var npc: Node3D = BasicNpc.spawn(self, pos, {"role": "hostile"})
+	for i in spawn_points.size():
+		var pos: Vector3 = spawn_points[i]
+		var npc: Node3D = BasicNpc.spawn(self, pos, configs[i % configs.size()])
+		if npc != null and eye != null:
+			npc.set_target(eye)
 		if npc != null and is_instance_valid(npc):
 			count += 1
 		else:

@@ -67,4 +67,5 @@ anti_aliasing/quality/use_debanding=true
 
 openxr/enabled=true
 openxr/default_action_map="res://action_map.tres"
+openxr/reference_space=2
 shaders/enabled=true

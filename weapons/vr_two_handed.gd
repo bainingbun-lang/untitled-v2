@@ -5,9 +5,7 @@
 class_name VrTwoHanded
 extends VrWeaponBase
 
-@export var enabled: bool = false:
-	set = set_enabled
-	get = get_enabled
+@export var enabled: bool = false: set = set_enabled, get = get_enabled
 
 @onready var original_transform: Transform3D = transform
 
@@ -24,7 +22,7 @@ func set_enabled(new_enabled: bool) -> void:
 		get_node("CollisionShape3D").disabled = !enabled
 
 func pick_up(by: Node, with_controller: XRController3D) -> void:
-	.pick_up(by, with_controller)
+	super.pick_up(by, with_controller)
 	
 	var hand = picked_up_by.get_hand()
 	if hand:

@@ -44,6 +44,7 @@ var _turning_input := 0.0
 var _locomotion_direction: float
 var _walking := false
 var _turning := false
+var _height_calibrated := false
 
 @onready var _body := $CharacterBody3D as CharacterBody3D
 @onready var _collision_shape := $CharacterBody3D/CollisionShape3D as CollisionShape3D
@@ -61,6 +62,8 @@ var _turning := false
 
 
 func _physics_process(delta: float) -> void:
+	if not _height_calibrated:
+		_calibrate_height()
 	_update_collision()
 	if can_move and (_walking or not _walk_require_press) and not _walking_input.is_zero_approx():
 		if locomotion_update_mode == Settings.LocomotionUpdateMode.CONTINUOUS:
@@ -128,11 +131,29 @@ func _set_hand_offset(position: Vector3, rotation: Vector3) -> void:
 	_left_hand.offset_rotation = Basis.from_euler(rotation)
 
 
+## Retried every physics frame until the headset reports a pose.
+func _calibrate_height() -> void:
+	var head := XRServer.get_tracker(&"head") as XRPositionalTracker
+	var pose := head.get_pose(&"default") if head else null
+	if pose == null or not pose.has_tracking_data:
+		return
+	_height_calibrated = true
+	var origin := _camera.get_parent() as XROrigin3D
+	var eye_y := _camera.position.y
+	if eye_y > 0.5:
+		origin.position.y = 0.0
+	else:
+		# shortcut: runtime gave a head-relative space (no floor); assume 1.6 m eyes until the guardian floor is set
+		origin.position.y = 1.6 - eye_y
+	print("VRPlayer: altura ojos=%.2f m, origen y=%.2f" % [eye_y, origin.position.y])
+
+
 func _update_collision() -> void:
 	_collision_shape.position.x = _camera.position.x
 	_collision_shape.position.z = _camera.position.z
-	_collision_shape.position.y = _camera.position.y / 2.0 + _shape.radius
-	_shape.height = _camera.position.y + _shape.radius * 2.0
+	var eye_y := _camera.position.y + (_camera.get_parent() as Node3D).position.y
+	_collision_shape.position.y = eye_y / 2.0 + _shape.radius
+	_shape.height = eye_y + _shape.radius * 2.0
 
 
 func _try_grab(tracker_hand: XRPositionalTracker.TrackerHand) -> void:

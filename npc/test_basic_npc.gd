@@ -40,59 +40,39 @@ func _run() -> void:
 		"patrol_points": [Vector3(4, 0, 0), Vector3(4, 0, 4)],
 	})
 	var first: Dictionary = npc.tick(0.1)
-	_expect(str(first.get("action", "")) == "patrol", "accion patrol sin objetivo")
-	_expect(not bool(first.get("visible", true)), "sin objetivo visible")
-	_expect(float(first.get("distance", -2.0)) < 0.0, "distance=-1 sin objetivo")
-	_expect(npc.goal == Vector3(4, 0, 0), "primer waypoint")
-	_expect(npc.current_action() == "patrol", "current_action patrol")
+	_expect(str(first.get("action", "")) == "wander", "accion wander por defecto")
+	_expect(npc.goal.distance_to(npc.global_position) <= 6.01, "goal dentro de 6 m")
+	var g1: Vector3 = npc.goal
+	npc.tick(1.0)
+	_expect(npc.goal == g1, "goal estable antes de 4 s")
+	npc.tick(4.0)
+	_expect(npc.goal != g1, "nuevo goal tras 4 s")
 	_expect(npc.can_see(Vector3(1, 0, 0)), "can_see dentro de vision")
 	_expect(not npc.can_see(Vector3(100, 0, 0)), "can_see fuera de vision")
 
-	_case = "reaccion a objetivo"
+	_case = "pacifico con objetivo"
 	var target := Node3D.new()
 	target.name = "player"
 	parent.add_child(target)
 	target.global_position = Vector3(1, 0, 0)
 	npc.global_position = Vector3(0, 0, 0)
-	var changes: Array = []
-	npc.action_changed.connect(func(action): changes.append(action))
 	npc.set_target(target)
 	var near: Dictionary = npc.tick(0.1)
-	_expect(bool(near.get("visible", false)), "objetivo visible")
-	_expect(str(near.get("action", "")) == "chase", "accion chase")
-	_expect(is_equal_approx(float(near.get("distance", 0.0)), 1.0), "distancia 1 al objetivo")
-	_expect(npc.goal == Vector3.ZERO, "goal en el sitio al estar dentro de stop_distance")
-	_expect(changes.has("chase"), "senal action_changed chase")
-	var snapshot: Dictionary = npc.snapshot()
-	_expect(bool(snapshot.get("visible", false)), "snapshot visible")
-	_expect(str(snapshot.get("target_id", "")) == "player", "snapshot target_id")
+	_expect(str(near.get("action", "")) == "wander", "no persigue al jugador")
 
-	_case = "persecucion y perdida"
-	target.global_position = Vector3(10, 0, 0)
-	var far: Dictionary = npc.tick(0.1)
-	_expect(str(far.get("action", "")) == "chase", "sigue chase con objetivo lejano")
-	_expect(is_equal_approx(npc.goal.x, 8.0), "goal a stop_distance del objetivo")
-	target.global_position = Vector3(100, 0, 0)
-	var lost: Dictionary = npc.tick(0.1)
-	_expect(not bool(lost.get("visible", true)), "objetivo fuera de vision")
-	_expect(str(lost.get("action", "")) == "investigate", "investiga ultima posicion")
-	_expect(is_equal_approx(npc.goal.x, 10.0), "goal en ultima posicion vista")
-
-	_case = "huida de civiliano"
+	_case = "huida tras dano"
 	var civilian = NpcScript.new()
 	civilian.name = "NpcCivilian"
 	civilian.auto_tick = false
 	parent.add_child(civilian)
-	civilian.apply_options({"role": "civilian", "flee_distance": 8.0})
+	civilian.apply_options({"flee_distance": 8.0})
 	civilian.global_position = Vector3(0, 0, 0)
-	var threat := Node3D.new()
-	threat.name = "threat"
-	parent.add_child(threat)
-	threat.global_position = Vector3(1, 0, 0)
-	civilian.set_target(threat)
+	civilian.take_damage(1.0, Vector3(1, 0, 0))
 	var flee: Dictionary = civilian.tick(0.1)
-	_expect(str(flee.get("action", "")) == "flee", "civiliano huye")
-	_expect(is_equal_approx(civilian.goal.x, -8.0), "goal opuesto al objetivo")
+	_expect(str(flee.get("action", "")) == "flee", "huye tras dano")
+	_expect(is_equal_approx(civilian.goal.x, -8.0), "goal opuesto a la fuente")
+	civilian.tick(8.0)
+	_expect(str(civilian.tick(0.1).get("action", "")) == "wander", "vuelve a wander tras 8 s")
 
 	_case = "dano y muerte"
 	npc.take_damage(40.0)

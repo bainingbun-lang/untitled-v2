@@ -11,12 +11,17 @@ extends VrWeaponBase
 @export var magazine_size: int = 12
 @export var ammunition: int = 12
 @export var damage: float = 34.0
+## From godot_weapon_manager (MIT, Colormatic): rate-of-fire gate and finite spare magazines (-1 = infinite).
+@export var fire_interval: float = 0.0
+@export var spare_magazines: int = -1
+@export var start_loaded: bool = false
 
 ## Emits "draw", "eject_magazine", "insert_magazine", "rack_slide", "Fire", "EmptyClick".
 signal weapon_action(action_name: String)
 
 var drawn: bool = false
 var reload: WeaponReload = WeaponReload.new(magazine_size)
+var _next_fire_ms: int = 0
 
 @export var rumble: float = 0.0:
 	set = set_rumble, get = get_rumble
@@ -41,6 +46,9 @@ func set_ammunition(new_value: int) -> void:
 func _ready() -> void:
 	super()
 	reload.magazine_size = magazine_size
+	if start_loaded:
+		reload.insert_magazine()
+		reload.rack_slide()
 	reload.reload_action.connect(_on_reload_action)
 	set_ammunition(reload.total_rounds())
 
@@ -63,6 +71,10 @@ func eject_magazine() -> bool:
 	return reload.eject_magazine()
 
 func insert_magazine(rounds: int = -1) -> bool:
+	if spare_magazines == 0 or reload.magazine_in:
+		return false
+	if spare_magazines > 0:
+		spare_magazines -= 1
 	return reload.insert_magazine(rounds)
 
 func rack_slide() -> void:
@@ -74,12 +86,17 @@ func is_chambered() -> bool:
 func action() -> void:
 	if not drawn or (has_node("AnimationPlayer") and $AnimationPlayer.is_playing()):
 		return
+	var now: int = Time.get_ticks_msec()
+	if now < _next_fire_ms:
+		return
+	_next_fire_ms = now + int(fire_interval * 1000.0)
 	if not reload.fire():
 		_play_anim("EmptyClick")
 		weapon_action.emit("EmptyClick")
 		return
 	set_ammunition(reload.total_rounds())
 	_play_anim("Fire")
+	_play_sound("ShotSound")
 	ShotFx.fire($Pivot/Smoke_spawn_point)
 	weapon_action.emit("Fire")
 	if has_node("Recoil"):
@@ -93,12 +110,18 @@ func _on_reload_action(action_name: String) -> void:
 	set_ammunition(reload.total_rounds())
 	if action_name == "insert_magazine":
 		_play_anim("Load")
+		_play_sound("ReloadSound")
 	weapon_action.emit(action_name)
 
 ## Scene may not ship these animations yet; skip missing ones instead of erroring.
 func _play_anim(anim: String) -> void:
 	if has_node("AnimationPlayer") and $AnimationPlayer.has_animation(anim):
 		$AnimationPlayer.play(anim)
+
+func _play_sound(node_name: String) -> void:
+	var player := get_node_or_null(node_name) as AudioStreamPlayer3D
+	if player and player.is_inside_tree():
+		player.play()
 
 func _process(delta: float) -> void:
 	if has_node("Aim/Target_dot") and $Aim.is_colliding():
