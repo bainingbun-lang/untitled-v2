@@ -4,16 +4,35 @@ extends Node3D
 ## piso y hasta 7 NPC. El jugador y la luz vienen de house_map.tscn.
 const BasicNpc = preload("res://npc/basic_npc.gd")
 const MAX_NPCS := 7
-const HOUSE := preload("res://maps/house_model/house.glb")
 
 
 func _ready() -> void:
-	var house := HOUSE.instantiate() as Node3D
+	var house := _load_glb(model_path())
+	if house == null:
+		push_warning("Mapa: no se pudo cargar " + model_path())
+		return
 	add_child(house)
 	for mi in house.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).create_trimesh_collision()
 	_add_ground()
 	_spawn_npcs()
+
+
+## Carga un .glb en tiempo de ejecución (funciona aunque no esté importado, y dentro del PCK en Android).
+static func _load_glb(path: String) -> Node3D:
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.is_empty():
+		return null
+	var gltf := GLTFDocument.new()
+	var state := GLTFState.new()
+	if gltf.append_from_buffer(bytes, "", state) != OK:
+		return null
+	return gltf.generate_scene(state) as Node3D
+
+
+## Ruta del modelo del mapa; cada mapa descargado la sobrescribe.
+func model_path() -> String:
+	return "res://maps/house_model/house.glb"
 
 
 func _add_ground() -> void:

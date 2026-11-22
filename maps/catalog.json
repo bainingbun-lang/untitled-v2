@@ -6,5 +6,9 @@
   {
     "name": "Casa descargada (CC0)",
     "scene": "res://maps/house_model/house_map.tscn"
+  },
+  {
+    "name": "Oficina (CC0)",
+    "scene": "res://maps/downloaded/office/office_map.tscn"
   }
 ]
