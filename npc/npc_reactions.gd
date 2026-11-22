@@ -43,6 +43,8 @@ func _watch(npc: Node) -> void:
 	_born[npc] = Time.get_ticks_msec()
 	if npc.has_signal("damaged"):
 		npc.damaged.connect(_on_damaged.bind(npc))
+	if npc.has_signal("died"):
+		npc.died.connect(_on_died.bind(npc))
 
 
 func _on_damaged(_amount: float, _health: float, npc: Node) -> void:
@@ -132,3 +134,15 @@ func _shout_all(text: String) -> void:
 		if is_instance_valid(npc):
 			_shout(npc, text)
 			break
+
+
+## Cuando cae un NPC, los cercanos (menos de 8 m) reaccionan con un grito de alarma.
+func _on_died(_source: Node, npc: Node) -> void:
+	if not is_instance_valid(npc) or not (npc is Node3D):
+		return
+	var dead_pos := (npc as Node3D).global_position
+	for other in _npcs:
+		if other == npc or not is_instance_valid(other) or not (other is Node3D):
+			continue
+		if (other as Node3D).global_position.distance_to(dead_pos) < 8.0 and other.get("_dead") != true:
+			_shout(other, "¡Cayó uno! ¡Alerta!")
