@@ -162,6 +162,12 @@ func _equip_weapon() -> void:
 	if not pickup.has_dropped.is_connected(_on_weapon_dropped):
 		pickup.has_dropped.connect(_on_weapon_dropped)
 
+	# Agarre de xr-tools en las dos manos (las armas xr_* se toman con grip y disparan con el gatillo).
+	_add_xr_pickup(controller)
+	_spawn_xr_test_pistol(controller.get_parent())
+	var left_ctrl := controller.get_parent().get_node_or_null("LeftController") as XRController3D
+	if left_ctrl != null:
+		_add_xr_pickup(left_ctrl)
 	var origin := controller.get_parent()
 	var left := origin.get_node_or_null("LeftController") as XRController3D
 	var holster := Holster.new()
@@ -270,3 +276,27 @@ func _process(_delta: float) -> void:
 static func inventory_scene(id: String) -> String:
 	var table := {"ak47": "res://weapons/ak47.tscn", "pistol": "res://weapons/pistol.tscn", "knife": "res://weapons/knife.tscn", "sniper": "res://weapons/sniper.tscn", "machete": "res://weapons/machete.tscn", "shotgun": "res://weapons/shotgun.tscn", "barrett": "res://weapons/barrett.tscn", "smg": "res://weapons/smg.tscn", "revolver": "res://weapons/revolver.tscn", "fusil": "res://weapons/fusil.tscn", "pdw": "res://weapons/pdw.tscn", "tanto": "res://weapons/tanto.tscn", "hacha": "res://weapons/hacha.tscn", "katana": "res://weapons/katana.tscn", "bate": "res://weapons/bate.tscn", "francotirador": "res://weapons/francotirador.tscn"}
 	return str(table.get(id, "res://weapons/ak47.tscn"))
+
+
+## Agrega el FunctionPickup de xr-tools a un mando. Las acciones se mapean a las de nuestro action_map.
+func _add_xr_pickup(ctrl: XRController3D) -> void:
+	if ctrl.get_node_or_null("XRPickup") != null:
+		return
+	var pickup_script = load("res://addons/godot-xr-tools/functions/function_pickup.gd")
+	var pk = pickup_script.new()
+	pk.name = "XRPickup"
+	pk.pickup_axis_action = "grip_click"
+	pk.action_button_action = "grab"
+	ctrl.add_child(pk)
+
+
+## Pistola xr-tools de prueba, frente al jugador a la altura de la cintura, para probar el agarre real.
+func _spawn_xr_test_pistol(origin: Node) -> void:
+	var packed := load("res://weapons/xr_pistol.tscn") as PackedScene
+	if packed == null:
+		push_warning("Sandbox: no se pudo cargar weapons/xr_pistol.tscn")
+		return
+	var pistol := packed.instantiate() as Node3D
+	add_child(pistol)
+	pistol.global_position = Vector3(0.0, 1.1, -0.8)
+	pistol.name = "XRPistolTest"
