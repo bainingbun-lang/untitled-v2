@@ -1,0 +1,51 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://weapons/melee/xr_melee.gd" id="1_melee"]
+[ext_resource type="ArrayMesh" path="res://weapons/knife/knife_mesh.tres" id="2_mesh"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_right.tscn" id="3_gr"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand.gd" id="4_gp"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_left.tscn" id="5_gl"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.54, 0.05, 0.012)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_blade"]
+size = Vector3(0.3, 0.04, 0.025)
+
+[node name="XR_machete" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 196615
+mass = 0.3
+script = ExtResource("1_melee")
+base_damage = 40.0
+
+[node name="Model" type="Node3D" parent="."]
+transform = Transform3D(0, 0, 1, 0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0.104, -0.06)
+
+[node name="Mesh" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1.8, 0, 0, 0, 1.4, 0, 0, 0, 1.4, 0, 0, 0)
+mesh = ExtResource("2_mesh")
+
+[node name="Blade" type="Area3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.12, 0, 0)
+collision_layer = 0
+collision_mask = 1
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Model/Blade"]
+shape = SubResource("BoxShape3D_blade")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0, 0, 1, 0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0.104, -0.06)
+shape = SubResource("BoxShape3D_body")
+
+[node name="GripR" parent="." instance=ExtResource("3_gr")]
+visible = false
+script = ExtResource("4_gp")
+handle = "Grip"
+hand = 1
+
+[node name="GripL" parent="." instance=ExtResource("5_gl")]
+visible = false
+script = ExtResource("4_gp")
+handle = "Grip"
