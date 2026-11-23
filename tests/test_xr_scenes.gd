@@ -57,11 +57,19 @@ func _init() -> void:
 ## Apunta el mando derecho a un botón del menú 2D y aprieta trigger_click: el botón debe recibir el clic.
 func _menu_click(menu: Node, player: Node3D) -> void:
 	var button: Button = menu._viewport.get_child(0)._nav_buttons.values()[0]
+	var panel: Node3D = menu._panel
+	var still := 0 # el panel sigue a la cabeza con suavizado: esperar a que deje de moverse (con tope) antes de apuntar
+	var last := panel.global_position
+	for i in 600:
+		await physics_frame
+		still = still + 1 if panel.global_position.distance_to(last) < 0.0005 else 0
+		last = panel.global_position
+		if still >= 10:
+			break
 	var clicked := []
 	button.pressed.connect(func(): clicked.append(1))
 	var rect := button.get_global_rect()
 	var c := rect.get_center()
-	var panel: Node3D = menu._panel
 	var size: Vector2 = menu.PANEL_SIZE
 	var view: Vector2 = Vector2(menu.VIEW_SIZE)
 	var target: Vector3 = panel.global_transform * Vector3(c.x / view.x * size.x - size.x * 0.5, size.y * 0.5 - c.y / view.y * size.y, 0.0)

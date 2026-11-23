@@ -9,9 +9,14 @@ const PUNCH_MIN_SPEED := 3.0
 const PUNCH_COOLDOWN := 0.35
 const SLAM_MIN_SPEED := 4.0
 const GRIP_THRESHOLD := 0.6
+## El solape del Area va un paso atrasado y un puñetazo real frena al pegar: se usa la velocidad pico reciente.
+const PUNCH_PEAK_TAU := 0.05
+## Por encima de esto es un salto de tracking, no un golpe.
+const MAX_HAND_SPEED := 25.0
 
 ## Velocidad de la mano en el mundo, sin la locomoción del jugador.
 var velocity := Vector3.ZERO
+var _peak_speed := 0.0
 
 var _controller: XRController3D
 var _origin: XROrigin3D
@@ -41,6 +46,8 @@ func _physics_process(delta: float) -> void:
 	var local := _controller.position
 	velocity = _origin.global_basis * ((local - _prev_local) / delta)
 	_prev_local = local
+	var raw := velocity.length()
+	_peak_speed = maxf(raw if raw < MAX_HAND_SPEED else 0.0, _peak_speed * exp(-delta / PUNCH_PEAK_TAU))
 	var picked: Variant = _held_object()
 	if picked == null:
 		_update_npc_grab()
@@ -58,7 +65,7 @@ func _held_object() -> Variant:
 
 
 func _check_punch() -> void:
-	var speed := velocity.length()
+	var speed := _peak_speed
 	if speed < PUNCH_MIN_SPEED:
 		return
 	var now := Time.get_ticks_msec() / 1000.0

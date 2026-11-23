@@ -50,6 +50,7 @@ func _init() -> void:
 	await _move(&"right_hand", gun.global_position, 15)
 	_grip(&"right_hand", 1.0)
 	await _move(&"right_hand", gun.global_position, 8)
+	await _until(func(): return rp.picked_up_object == gun)
 	_expect(rp.picked_up_object == gun and gun.is_picked_up(), "FunctionPickup derecho agarra la pistola")
 	var up := Vector3(0.0, 1.3, -2.45)
 	await _move(&"right_hand", up, 20)
@@ -62,6 +63,7 @@ func _init() -> void:
 	await _move(&"left_hand", well.global_position, 15)
 	_grip(&"left_hand", 1.0)
 	await _move(&"left_hand", well.global_position, 8)
+	await _until(func(): return lp.picked_up_object == mag)
 	var out := false
 	var by_hand: bool = lp.picked_up_object == mag
 	_expect(by_hand, "la mano izquierda agarra el cargador")
@@ -140,6 +142,7 @@ func _punch(sb: Node) -> void:
 	var hp0 = npc.get("health")
 	var dmg := [0]
 	var orig_hp: float = float(hp0) if hp0 != null else 0.0
+	await _settled(npc)
 	var center: Vector3 = npc.global_position + Vector3(0, 1.0, 0)
 	_grip(&"right_hand", 0.0)
 	_hand_pos[&"right_hand"] = Vector3.ZERO # salto sin cruzar al NPC
@@ -148,7 +151,9 @@ func _punch(sb: Node) -> void:
 	await _move(&"right_hand", center, 90) # ~1.3 m en 1.5 s = 0.8 m/s
 	var slow_hp = npc.get("health")
 	_expect(slow_hp == hp0, "golpe lento no hace daño (%s)" % str(slow_hp))
-	# rápido
+	# rápido (el NPC puede haberse movido durante el golpe lento: apuntar a su posición actual)
+	await _settled(npc)
+	center = npc.global_position + Vector3(0, 1.0, 0)
 	await _move(&"right_hand", center + Vector3(0.0, 0, 1.5), 20)
 	await _move(&"right_hand", center, 6) # ~1.5 m en 0.1 s
 	for i in 3:
@@ -166,6 +171,28 @@ func _punch(sb: Node) -> void:
 		var d: float = npc.global_position.distance_to(_player.get_left_controller().global_position)
 		_expect(d < 1.3, "el NPC agarrado sigue a la mano (%.2f m)" % d)
 		_expect(absf(npc.global_position.z - (c.z + 0.6)) < 0.5, "el NPC se movió con la mano")
+
+
+## Espera (en pasos de física, con tope) a que se cumpla la condición: el agarre y los solapes de Area van un paso atrasados.
+func _until(cond: Callable, max_frames := 120) -> void:
+	for i in max_frames:
+		if cond.call():
+			return
+		await physics_frame
+
+
+## Espera a que el NPC deje de moverse (aterrizar, huir tras un disparo) antes de apuntarle.
+func _settled(npc: Node3D) -> void:
+	var still := 0
+	var last := npc.global_position
+	for i in 300:
+		await physics_frame
+		if not is_instance_valid(npc):
+			return
+		still = still + 1 if npc.global_position.distance_to(last) < 0.002 else 0
+		last = npc.global_position
+		if still >= 5:
+			return
 
 
 ## Mueve la mano (pose en espacio del origen) hacia un punto del mundo en `frames` pasos de física.

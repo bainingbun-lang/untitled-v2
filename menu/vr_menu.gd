@@ -16,6 +16,7 @@ var _pressed := {}
 
 
 func _ready() -> void:
+	_add_floor()
 	_viewport = SubViewport.new()
 	_viewport.size = VIEW_SIZE
 	_viewport.transparent_bg = false
@@ -47,6 +48,18 @@ func _ready() -> void:
 			_add_laser(c)
 
 
+## Suelo invisible: sin él el cuerpo del jugador cae sin fin y el panel (que sigue a la cabeza) se va con él.
+func _add_floor() -> void:
+	var floor_body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(20, 0.2, 20)
+	cs.shape = box
+	cs.position.y = -0.1
+	floor_body.add_child(cs)
+	add_child(floor_body)
+
+
 var _head: XRCamera3D
 var _placed := false
 var _lasers: Dictionary = {}
@@ -70,7 +83,7 @@ func _place_panel() -> void:
 
 
 ## El panel sigue a la cabeza: siempre a 2 m al frente y a la altura de los ojos, mirando al jugador.
-func _follow_head() -> void:
+func _follow_head(delta: float) -> void:
 	if _head == null:
 		return
 	var eye := _head.global_position
@@ -81,7 +94,7 @@ func _follow_head() -> void:
 	fwd = fwd.normalized()
 	var target := eye + fwd * 2.0
 	target.y = eye.y
-	_panel.global_position = _panel.global_position.lerp(target, 0.15) if _placed else target
+	_panel.global_position = _panel.global_position.lerp(target, 1.0 - exp(-10.0 * delta)) if _placed else target
 	_panel.look_at(eye, Vector3.UP)
 	_panel.rotate_y(PI)
 	_placed = true
@@ -116,8 +129,8 @@ func _update_laser(c: XRController3D, hit: Dictionary) -> void:
 	laser.scale = Vector3(1, length, 1)
 
 
-func _process(_delta: float) -> void:
-	_follow_head()
+func _process(delta: float) -> void:
+	_follow_head(delta)
 	for c in _controllers:
 		var hit := _ray_panel(c)
 		_update_laser(c, hit)
