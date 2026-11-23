@@ -54,6 +54,7 @@ jobs:
           EOT
           sed -i 's/^          //' ~/.config/godot/editor_settings-4.7.tres
       - name: Compilar APK de VR
+        if: ${{ !inputs.release }}
         run: bash tools/ci_build_vr.sh "$PWD/out/untitled_vr_debug.apk"
       - name: Compilar APK de release (con sonido)
         if: inputs.release
@@ -65,6 +66,7 @@ jobs:
           name: untitled-vr-release-apk
           path: out/untitled_vr_release.apk
       - name: Verificar APK
+        if: ${{ !inputs.release }}
         run: |
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify out/untitled_vr_debug.apk
           "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging out/untitled_vr_debug.apk | grep -E "^package:|headtracking"
