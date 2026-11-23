@@ -14,7 +14,7 @@ T="$(mktemp -d)"; curl -fsSL "$VENDOR_URL" -o "$T/v.zip"; echo "$VENDOR_SHA256  
 unzip -q "$T/v.zip" -d "$T/u"; A="$(find "$T/u" -type d -name godotopenxrvendors | head -1)"; [ -n "$A" ] || { echo "sin addon"; exit 1; }
 cp -r "$A" "$P/addons/"
 unzip -q "$TEMPLATE_ZIP" -d "$P/android/build"; touch "$P/android/.gdignore"; find "$P/android" -name '*.import' -type f -delete
-printf '4.7.stable' > "$P/android/.build_version"
+BV="$("$GODOT" --version 2>/dev/null | sed -n 's/^\([0-9.]*stable\).*/\1/p' | head -1)"; printf '%s' "${BV:-4.7.stable}" > "$P/android/.build_version"
 printf '\norg.gradle.daemon=false\norg.gradle.jvmargs=-Xmx3g\n' >> "$P/android/build/gradle.properties"
 python3 "$ROOT/tools/vr_project_settings.py" "$P/project.godot"
 sed -i "s#/data/data/com.termux/files/home/untitled-control/keys/debug.keystore#$KEYSTORE#g" "$P/export_presets.cfg"
