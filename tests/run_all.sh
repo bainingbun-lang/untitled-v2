@@ -22,4 +22,5 @@ run "armas (recarga, disparo, cadencia)" res://weapons/test_weapon_handling.gd "
 run "arsenal (todas las armas cargan)" res://tests/test_arsenal.gd "RESULTADO: OK"
 run "reacciones (alarma al caer un NPC)" res://tests/test_reactions.gd "RESULTADO: OK"
 run "combate (perdigones, cabeza)" res://tests/test_combat.gd "RESULTADO: OK"
+run "armas xr-tools (agarre, gatillo, cargador, corredera)" res://tests/test_xr_weapons.gd "RESULTADO: OK"
 exit $fail

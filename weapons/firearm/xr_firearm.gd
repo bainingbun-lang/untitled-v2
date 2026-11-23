@@ -1,0 +1,149 @@
+extends XRToolsPickable
+
+## Arma de fuego agarrable con xr-tools: gatillo (FirearmTrigger), cadencia, daño, retroceso visual
+## y recarga manual: el cargador entra/sale por la SnapZone "MagazineWell" y la corredera
+## (InteractableSlider "SlideOrigin/Slide") mete bala en recámara al ir atrás y volver.
+## La munición la lleva WeaponReload; aquí solo se conectan los eventos.
+signal shot(hit: Dictionary)
+
+const BulletImpact = preload("res://gore/bullet_impact.gd")
+
+@export var damage := 40.0
+@export var fire_interval := 0.25
+@export var automatic := false
+@export var pellets := 1
+@export var spread_deg := 0.0
+@export var max_range := 80.0
+@export var magazine_size := 12
+@export var spawn_chambered := true
+@export var shot_sound: AudioStream
+@export var recoil_back := 0.03
+@export var recoil_up_deg := 6.0
+@export var recoil_recover := 12.0
+## Cargador del modelo importado; se oculta porque el cargador real es el nodo "Magazine".
+@export var model_magazine: NodePath
+
+var reload: WeaponReload
+var _cooldown := 0.0
+var _slide_back := false
+var _mag: Node3D
+var _model: Node3D
+var _model_rest: Transform3D
+var _trigger: Node
+var _muzzle: Node3D
+var _handle: XRToolsPickable
+
+
+func _ready() -> void:
+	super()
+	reload = WeaponReload.new(magazine_size)
+	_model = get_node_or_null("Model")
+	if _model:
+		_model_rest = _model.transform
+	if not model_magazine.is_empty():
+		get_node(model_magazine).visible = false
+	_muzzle = get_node_or_null("Muzzle")
+	_trigger = get_node_or_null("FirearmTrigger")
+	if _trigger:
+		_trigger.fired.connect(try_fire)
+	var well := get_node_or_null("MagazineWell")
+	if well:
+		well.has_picked_up.connect(_on_mag_in)
+		well.has_dropped.connect(_on_mag_out)
+	var slide := get_node_or_null("SlideOrigin/Slide")
+	if slide:
+		slide.slider_moved.connect(_on_slide_moved)
+		_handle = slide.get_node_or_null("HandleOrigin/InteractableHandle")
+	picked_up.connect(func(_p): _set_handle(true))
+	dropped.connect(func(_p): _set_handle(false))
+	_set_handle(false)
+
+
+func _physics_process(delta: float) -> void:
+	_cooldown = maxf(0.0, _cooldown - delta)
+	if automatic and _trigger and _trigger.triggered:
+		try_fire()
+	if _model:
+		_model.transform = _model.transform.interpolate_with(_model_rest, minf(1.0, recoil_recover * delta))
+
+
+## Dispara si hay bala en recámara y la cadencia lo permite. Devuelve true si salió el tiro.
+func try_fire() -> bool:
+	if _cooldown > 0.0 or _muzzle == null:
+		return false
+	_cooldown = fire_interval
+	if not reload.fire():
+		return false
+	_play(shot_sound)
+	_kick()
+	var space := get_world_3d().direct_space_state
+	var exclude: Array[RID] = [get_rid()]
+	if is_instance_valid(_mag):
+		exclude.append(_mag.get_rid())
+	var spread := deg_to_rad(spread_deg)
+	for i in pellets:
+		var dir := -_muzzle.global_basis.z
+		if spread > 0.0:
+			dir = dir.rotated(_muzzle.global_basis.x, randf_range(-spread, spread))
+			dir = dir.rotated(_muzzle.global_basis.y, randf_range(-spread, spread))
+		var from := _muzzle.global_position
+		var q := PhysicsRayQueryParameters3D.create(from, from + dir * max_range)
+		q.exclude = exclude
+		var hit := space.intersect_ray(q)
+		if not hit.is_empty():
+			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], damage / pellets, self)
+		shot.emit(hit)
+	return true
+
+
+func _kick() -> void:
+	if _model == null:
+		return
+	_model.transform = _model_rest.translated_local(Vector3(0, 0, recoil_back)) \
+			.rotated_local(Vector3.RIGHT, deg_to_rad(recoil_up_deg))
+
+
+func _on_mag_in(mag: Node3D) -> void:
+	_mag = mag
+	reload.insert_magazine(mag.rounds)
+	if spawn_chambered:
+		spawn_chambered = false
+		reload.rack_slide()
+
+
+func _on_mag_out() -> void:
+	if is_instance_valid(_mag):
+		_mag.rounds = reload.magazine_rounds
+	_mag = null
+	reload.eject_magazine()
+
+
+# Corredera atrás del todo y de vuelta adelante = un ciclo de recarga.
+func _on_slide_moved(pos: float) -> void:
+	var limit: float = get_node("SlideOrigin").limit_maximum
+	if pos >= limit * 0.9:
+		_slide_back = true
+	elif _slide_back and pos <= limit * 0.1:
+		_slide_back = false
+		reload.rack_slide()
+
+
+func _set_handle(on: bool) -> void:
+	if _handle:
+		_handle.enabled = on
+
+
+func _play(stream: AudioStream) -> void:
+	if stream == null or not is_inside_tree():
+		return
+	var p := AudioStreamPlayer3D.new()
+	p.stream = stream
+	get_tree().root.add_child(p)
+	p.global_position = global_position
+	p.play()
+	p.finished.connect(p.queue_free)
+
+
+## Compatibilidad con el inventario/arsenal (piden action()): dispara.
+func action() -> void:
+	try_fire()

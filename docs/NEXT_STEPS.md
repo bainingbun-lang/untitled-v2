@@ -71,3 +71,11 @@ Versión estable con menú principal (Jugar, Mods, Configuración) y un sistema 
 - Gore: charcos al morir y bajo cabezas cortadas; rastro de sangre al piso.
 - Pruebas: `bash tests/run_all.sh` (mods, armas, arsenal, combate). Todas pasan. Smoke de todas las escenas principales sin errores de script.
 - Limitaciones: el bate usa la lógica de corte del cuchillo (sin desmembrar). Los charcos usan altura de piso fija (0.53 m), no raycast.
+
+### Armas con agarre de xr-tools (weapons/xr_*.tscn)
+- Escenas: `xr_pistol` (modelo derringer CC0), `xr_ak47`, `xr_sniper`, `xr_barrett` (modelo sniper CC0 escalado), `xr_shotgun` y `xr_smg` (cajas). Se generan con `weapons/firearm/build_xr_weapons.gd` (editar la tabla WEAPONS y volver a ejecutar; no editar las .tscn a mano).
+- Cada arma: XRToolsPickable (`weapons/firearm/xr_firearm.gd`), colisión en caja alineada al modelo, empuñadura (handle "Grip", la única que deja disparar), puntos extra para la otra mano (guardamanos/culata, second_hand_grab=SECOND), FirearmTrigger, cargador agarrable (`xr_magazine.gd`) en una SnapZone "MagazineWell", y corredera/cerrojo/bomba con InteractableSlider + InteractableHandle. La munición sigue en `WeaponReload`.
+- Prueba: `tests/test_xr_weapons.gd` (en run_all.sh).
+- BLOQUEO: el jugador (`player/vr_player.tscn`, VRHand propio) no tiene XRToolsFunctionPickup, así que estas armas aún no se agarran en la sandbox ni están en el inventario (SCENES sigue apuntando a las armas antiguas). Siguiente paso: añadir FunctionPickup a cada mano del jugador sin romper puño/agarre de NPC/funda, y luego cambiar SCENES a las xr_*.
+- Sin verificar (requiere casco): posición/rotación de las manos en los grab points, orientación del cañón de la derringer (se asume -Z), que meter el cargador funcione soltándolo cerca del pozo (SnapZone en modo DROPPED, radio 6 cm), sensación del retroceso (solo visual, el modelo se desplaza y vuelve), y que el arma sostenida no choque con el cuerpo (xr-tools pone collision_mask=0 al agarrar).
+- Escopeta y subfusil usan cargador extraíble (escopeta tipo Saiga); la escopeta de tubo queda pendiente.

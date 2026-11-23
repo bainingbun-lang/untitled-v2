@@ -1,0 +1,129 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://weapons/firearm/xr_firearm.gd" id="1_b8ucf"]
+[ext_resource type="AudioStream" path="res://weapons/ak47/ak47_shot.wav" id="2_xehss"]
+[ext_resource type="PackedScene" path="res://weapons/pistol_cc0/derringer.glb" id="3_i1wld"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_right.tscn" id="4_ab5k0"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand.gd" id="5_mgvl0"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_left.tscn" id="6_cw648"]
+[ext_resource type="Script" path="res://weapons/firearm/firearm_trigger.gd" id="7_4yasb"]
+[ext_resource type="Script" path="res://weapons/firearm/xr_magazine.gd" id="8_w4v2r"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/snap_zone.tscn" id="9_vm0bj"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/objects/snap_zone.gd" id="10_il7gb"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/interactables/interactable_slider_origin.gd" id="11_1060s"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/interactables/interactable_slider.gd" id="12_rrv73"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/interactables/interactable_handle.tscn" id="13_xsfp5"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/interactables/interactable_handle.gd" id="14_x6poo"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_m3xsp"]
+size = Vector3(0.02, 0.07, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6s0pn"]
+size = Vector3(0.014, 0.045, 0.022)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7g2cc"]
+size = Vector3(0.014, 0.045, 0.022)
+
+[sub_resource type="BoxMesh" id="BoxMesh_h4hnc"]
+size = Vector3(0.06, 0.01, 0.012)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_oea87"]
+radius = 0.035
+
+[node name="XR_pistol" type="RigidBody3D" unique_id=990712665]
+collision_layer = 4
+collision_mask = 196615
+script = ExtResource("1_b8ucf")
+damage = 45.0
+fire_interval = 0.2
+magazine_size = 7
+shot_sound = ExtResource("2_xehss")
+recoil_up_deg = 10.0
+second_hand_grab = 2
+
+[node name="Model" type="Node3D" parent="." unique_id=1457454175]
+
+[node name="Mesh" type="Node3D" parent="Model" unique_id=356766342 instance=ExtResource("3_i1wld")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1108889721]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.022, 0)
+shape = SubResource("BoxShape3D_m3xsp")
+
+[node name="GripR" type="Marker3D" parent="." unique_id=2094692815 instance=ExtResource("4_ab5k0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.035, 0.035)
+visible = false
+script = ExtResource("5_mgvl0")
+handle = "Grip"
+hand = 1
+
+[node name="GripL" type="Marker3D" parent="." unique_id=1653760739 instance=ExtResource("6_cw648")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.035, 0.035)
+visible = false
+script = ExtResource("5_mgvl0")
+handle = "Grip"
+
+[node name="TriggerMesh" type="MeshInstance3D" parent="." unique_id=2102057103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.015, 0)
+
+[node name="FirearmTrigger" type="Node" parent="." unique_id=2054749395 node_paths=PackedStringArray("mesh_trigger")]
+script = ExtResource("7_4yasb")
+mesh_trigger = NodePath("../TriggerMesh")
+value = 0.3
+
+[node name="Muzzle" type="Marker3D" parent="." unique_id=990536356]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.07)
+
+[node name="Magazine" type="RigidBody3D" parent="." unique_id=691063092 groups=["mag_pistol"]]
+top_level = true
+collision_layer = 4
+collision_mask = 196615
+script = ExtResource("8_w4v2r")
+rounds = 7
+
+[node name="Mesh" type="MeshInstance3D" parent="Magazine" unique_id=233823032]
+mesh = SubResource("BoxMesh_6s0pn")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Magazine" unique_id=1373144898]
+shape = SubResource("BoxShape3D_7g2cc")
+
+[node name="GrabL" type="Marker3D" parent="Magazine" unique_id=2123991492 instance=ExtResource("6_cw648")]
+visible = false
+script = ExtResource("5_mgvl0")
+
+[node name="GrabR" type="Marker3D" parent="Magazine" unique_id=1026404048 instance=ExtResource("4_ab5k0")]
+visible = false
+script = ExtResource("5_mgvl0")
+hand = 1
+
+[node name="MagazineWell" type="Area3D" parent="." unique_id=663663496 instance=ExtResource("9_vm0bj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, 0.035)
+collision_layer = 4
+collision_mask = 65540
+script = ExtResource("10_il7gb")
+grab_distance = 0.06
+snap_require = "mag_pistol"
+initial_object = NodePath("../Magazine")
+
+[node name="SlideOrigin" type="Node3D" parent="." unique_id=954351390]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0, 0.014, 0)
+script = ExtResource("11_1060s")
+limit_maximum = 0.03
+
+[node name="Slide" type="Node3D" parent="SlideOrigin" unique_id=2047645451]
+script = ExtResource("12_rrv73")
+default_on_release = true
+
+[node name="SlideMesh" type="MeshInstance3D" parent="SlideOrigin/Slide" unique_id=512245394]
+mesh = SubResource("BoxMesh_h4hnc")
+
+[node name="HandleOrigin" type="Node3D" parent="SlideOrigin/Slide" unique_id=308503244]
+
+[node name="InteractableHandle" type="RigidBody3D" parent="SlideOrigin/Slide/HandleOrigin" unique_id=2025366317 instance=ExtResource("13_xsfp5")]
+collision_layer = 262144
+collision_mask = 0
+gravity_scale = 0.0
+script = ExtResource("14_x6poo")
+picked_up_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SlideOrigin/Slide/HandleOrigin/InteractableHandle" unique_id=2022873487]
+shape = SubResource("SphereShape3D_oea87")

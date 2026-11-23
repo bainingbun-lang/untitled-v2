@@ -1,0 +1,197 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://weapons/firearm/xr_firearm.gd" id="1_eer1c"]
+[ext_resource type="AudioStream" path="res://weapons/ak47/ak47_shot.wav" id="2_abxxf"]
+[ext_resource type="PackedScene" path="res://weapons/ak47/ak47.glb" id="3_8gwtm"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_right.tscn" id="4_eulvt"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand.gd" id="5_j6nu7"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_left.tscn" id="6_bxnhp"]
+[ext_resource type="Script" path="res://weapons/firearm/firearm_trigger.gd" id="7_iyasd"]
+[ext_resource type="Script" path="res://weapons/firearm/xr_magazine.gd" id="8_xwvkw"]
+[ext_resource type="Texture2D" path="res://weapons/ak47/ak47_akmat_1.png" id="9_nkju2"]
+[ext_resource type="Texture2D" path="res://weapons/ak47/ak47_akmat.png" id="10_k4x8k"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/snap_zone.tscn" id="11_tbb5n"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/objects/snap_zone.gd" id="12_qosfo"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/interactables/interactable_slider_origin.gd" id="13_lh7eg"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/interactables/interactable_slider.gd" id="14_v1lmd"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/interactables/interactable_handle.tscn" id="15_xqpoc"]
+[ext_resource type="Script" path="res://addons/godot-xr-tools/interactables/interactable_handle.gd" id="16_e5h6w"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2mwur"]
+size = Vector3(0.02528746, 0.22560224, 0.7430247)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jk624"]
+resource_name = "akmat"
+cull_mode = 2
+albedo_texture = ExtResource("9_nkju2")
+normal_enabled = true
+normal_texture = ExtResource("10_k4x8k")
+metadata/_gltf_primary_texture_coord = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_m7u5l"]
+_surfaces = [{
+"aabb": AABB(0.064965144, -0.15625873, -0.011300946, 0.11981785, 0.15097627, 0.022601891),
+"format": 34896613377,
+"index_count": 204,
+"index_data": PackedByteArray("EAATABQAEAAUAA8AEwARABQAFQATABAAFQAQAAsAFgATABUAFwAVAAsAFgAVABcAFwAPABQAFgAYABMAEwAYABEAFgAXABkAGQAXABQAGQAUABEAGgAWABkAGgAYABYADQAZABEAGgAZAA0AGAAbABEADQARABsAGgASABgAGAASABsAHAAaAA0AHAANABsAEgAaAB0AHAAdABoAEgAdAB4AEgAfABsAEgAeAB8AHAAbAB8AHQAgAB4AHwAeACAAIQAdABwAHQAhACAAIgAcAB8AHwAgACIAIQAcACMAIgAjABwAAQAgACEAAQAhACMAIAAJACIAAQAIACAAIAAIAAkAAQAjAAcAIgAHACMABwAIAAEAIgAJAAcABwAJAAgACgALAAwAFwALAAoADAALABAAFwAKAA8ADgAPAAoACgAMAA4AAwAQAA8ADAAQAAMAAwAPAAYADgAGAA8AAgAMAAMADAAAAA4ADAACAAAAAAAGAA4AAgADAAQAAAACAAQABAADAAYAAAAFAAYABAAGAAUAAAAEAAUA"),
+"lods": [0.008693377, PackedByteArray("CgALAAwACwAKAA0ACgAMAA4ADgAPAAoADQAKAA8ADAAAAA4ADAALABAADAACAAAAAAAGAA4ADgAGAA8AAAAFAAYAAAAEAAUABAAGAAUAAAACAAQABAADAAYAAgADAAQAAgAMAAMAAwAPAAYADAAQAAMAAwAQAA8AEAARAA8ADQAPABEAEAASABEACwASABAADQARAAkAEgAJABEAAQALAA0AAQASAAsACQAHAA0AAQANAAcACQASAAgAAQAIABIABwAJAAgABwAIAAEA"), 0.034895428, PackedByteArray("AAABAAIAAgABAAMAAAACAAQAAgADAAQAAAAEAAUABAAGAAUAAAAFAAYABAADAAYAAQAAAAcABwAAAAYAAQAIAAMABwAIAAEAAwAIAAkABwAJAAgAAwAJAAYABwAGAAkA")],
+"name": "akmat",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 36,
+"vertex_data": PackedByteArray("///ZVD36AABeev//AAAAAP//2VTBBQAAhM8AAMEFAAC/1fUBwQUAAL/V9QE9+gAAhM8AAD36AABeev////8AAAAA//8AAAAAAAD/////AAAV3PhnPfoAABXc+GfBBQAAZ/0GWsEFAABXi6C0PfoAAGf9Blo9+gAAzpjZFj36AADOmNkWwQUAADU6s2A9+gAAaho2j8EFAADkZA04wQUAAORkDTg9+gAA8LoafcEFAACrn/2WwQUAAPC6Gn09+gAANTqzYMEFAACrn/2WPfoAAFeLoLTBBQAAaho2jz36AAC+ftrUPfoAAL5+2tTBBQAAwgbGwcEFAADCBsbBPfoAAN4AMOnBBQAA8Hr77cEFAADeADDpPfoAAPB6++09+gAA")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_op8q3"]
+resource_name = "ak47_Cube_095"
+_surfaces = [{
+"aabb": AABB(0.064965144, -0.15625873, -0.011300946, 0.11981785, 0.15097627, 0.022601891),
+"attribute_data": PackedByteArray("++DujtHrv8yR6+6OvOC/zElYu+86beX+vm6e/v9XgLXMb5imf+IgF3/iigyjyIoMo8ggFxbFhyvXxACJ7M8AiazPhysWxf0prM/9KSdjrQsSR60LEkfDFidjwxaLEC9uowH8halZ7oTGSnlu8Flqg/vgMJmR6zCZkeuLkPvgdrb74IuQ/1cl7uB1WvJVXKvmRWALyu98utQWxZ9nrM9SWBbFtzmsz7c5MUkvbmVNEIy2QYZygCAqkhbFBUmszwVJFsVSWKzPn2esz+12FsXtdhbFZ4Ksz2eC3WDJ09964+P6e3TFiV9z3cVdncAJeKu2IXNLrKda/rn74PKikevyopHrtKz74LSsket2tvvgOMCR6zjAkeuJx/vgiccXJXV2xS8fk9QuDneoG/Zz7z4PkbYROY5/OLl1VgdSiQkV13A="),
+"format": 34896613399,
+"index_count": 204,
+"index_data": PackedByteArray("KAAuAC8ALgAnAC8AKAAvACkALgAwACcADQAoACkAMAAxACcADQApABAAEQANABAAEQAQABIAMAAmADEAJgAyADEAJgAzADIAMgAzADQAMgA0ADUANAAPADUANAAOAA8AJAA2ACUANgA3ACUAJAAlADgANgA5ADcAOgAkADgAOQAiADcAOgA4ADsAOQAjACIAPAA6ADsAIQAiACMAPAA9ADoAPAAHAD0APAAIAAcAIQAGACIABAAGACEABAAFAAYAHAAdAB4AHAAeACAAHgAAACAAHgACAAAAPgAdABwAPgA/AB0AQAA/AD4AQAA+AEEAQgBAAEEAQgBBAB8AQwBCAB8AQwBEAEIARQBEAEMARQBDAEYAAQBFAEYAAQBGAAMACQAKAAsACQALAAwAEwAUABUAEwAVABYARwAtAEgARwBIAEkALQBHAEoASQBIAEsALQBKAEwASQBLAE0ASgBOAEwATQBLACsASgBPAE4AFwBOAE8AFwAYAE4ATQArACwAKgAsACsAKgArABkAGgAqABkAGgAZABsA"),
+"lods": [0.008693377, PackedByteArray("HAAdAB4AHQAcAB8AAQAdAB8AAQAfAAMAHAAeACAAHgAAACAAHgACAAAABAAFAAYABAAGACEAIQAGACIAIQAiACMAJAAjACIAJAAiACUAJAAlAAgACAAHACQADwAmAA4AJgAPACcAKAAmACcAKAAnACkADQAoACkADQApABAAEQANABAAEQAQABIACQAKAAsACQALAAwAEwAUABUAEwAVABYAGgAqABkAGgAZABsAKgArABkAKgAsACsALAAtACsAFwAtACwAFwAYAC0A"), 0.034895428, PackedByteArray("AAABAAIAAQAAAAMABAAFAAYABwAEAAYABwAGAAgACQAKAAsACQALAAwADQAOAA8ADQAPABAAEQANABAAEQAQABIAEwAUABUAEwAVABYAFwAYABkAGgAXABkAGgAZABsA")],
+"material": SubResource("StandardMaterial3D_jk624"),
+"name": "akmat",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 80,
+"vertex_data": PackedByteArray("///ZVD36/z9eev//AAD+P///2VTBBf8/Xnr//////j///9lUPfrNFr/V9QE9+s0WhM8AAD36zRZeev/////LFgAA/////8sW///ZVD36uyr//9lUwQW7Kr/V9QHBBQ86v9X1AT36DzqEzwAAwQXpKwAA//8AAP0/AAD//////T+EzwAAPfrpK7/V9QHBBWwWv9X1AT36bBZeev//////PwAA//////8/AAD//wAA/z9eev//AAD/P156//8AAJwBAAD//wAAWAGEzwAAwQUAAP//2VTBBQAAv9X1AcEFAAAV3PhnPfq6NhXc+GfBBbo2Z/0GWsEFxDpXi6C0PfpkPmf9Blo9+sQ6Z/0GWj36zRbOmNkWPfrNFhXc+Gc9+s0WV4ugtD36zRY1OrNgPfrNFmoaNo/BBWc+NTqzYD36ezzOmNkWwQW8Ns6Y2RY9+rw2Z/0GWsEFAADOmNkWwQUAABXc+GfBBQAAaho2j8EFAADkZA04wQXkOeRkDTg9+uQ5NTqzYMEFezxqGjaPPfpnPsIGxsE9+o4/wgbGwcEFjj/eADDpwQXxP94AMOk9+vE/q5/9lj36zRbkZA04PfrNFmoaNo89+s0W8LoafT36zRa+ftrUPfrNFsIGxsE9+s0W3gAw6T36yxbwevvtPfrLFvC6Gn09+t458LoafcEF3jmrn/2WwQV3PKuf/ZY9+nc8V4ugtMEFZD6+ftrUPfqNP75+2tTBBY0/8Hr77cEF8j/wevvtPfryP1eLoLTBBQAANTqzYMEFAACrn/2WwQUAAL5+2tTBBQAA5GQNOMEFAADCBsbBwQUAAPC6Gn3BBQAA3gAw6cEFtADwevvtwQXQANB/XgAhg5EB0H9eACGDkQH/f/9//3//f/9//39LfxR9UX+ifZ8qvyqfKr8q6xwoRuscKEYzLBnWPnwe/j58Hv4zLBnWDBYFywwWBcv///9/////f////3////9/NC1Vrk0tKK5j0mNSY9JjUmPSY1JwwjghcMI4IYi3xBvlpHMSiLfEG/9//3//f/9//3//f/9//3//f/9/M1uY7UxPpeeSPcjekj3I3mPSY1Jj0mNSY9JjUmPSY1KjRdDio0XQ4kxPpeczW5jt1Gnp9NRp6fQ2d5r7Nnea+/9//3//f/9//3//f/9//3//f/9//3//f6V/vn6lf35+bbo2HW26Nh3HsGQYx7BkGOWkcxJLliULS5YlC4+ISASPiEgEY9JjUmPSY1Jj0mNSY9JjUmPSY1Jj0mNSY9JjUnEt5a1lLfqt")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_m7u5l")
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_73bva"]
+size = Vector3(0.022601897, 0.15097627, 0.11981785)
+
+[sub_resource type="BoxMesh" id="BoxMesh_esm0r"]
+size = Vector3(0.05, 0.015, 0.01)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_e4gvx"]
+radius = 0.035
+
+[node name="XR_ak47" type="RigidBody3D" unique_id=2047845710]
+collision_layer = 4
+collision_mask = 196615
+script = ExtResource("1_eer1c")
+damage = 35.0
+fire_interval = 0.1
+automatic = true
+magazine_size = 30
+shot_sound = ExtResource("2_abxxf")
+recoil_back = 0.02
+recoil_up_deg = 3.0
+model_magazine = NodePath("Model/Mesh/ak47/akmagazine_low")
+second_hand_grab = 2
+
+[node name="Model" type="Node3D" parent="." unique_id=168607328]
+
+[node name="Mesh" type="Node3D" parent="Model" unique_id=63620865 instance=ExtResource("3_8gwtm")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1475128616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.313226e-09, -0.043457612, -0.10526857)
+shape = SubResource("BoxShape3D_2mwur")
+
+[node name="GripR" type="Marker3D" parent="." unique_id=1523499570 instance=ExtResource("4_eulvt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0.04)
+visible = false
+script = ExtResource("5_j6nu7")
+handle = "Grip"
+hand = 1
+
+[node name="GripL" type="Marker3D" parent="." unique_id=1995934636 instance=ExtResource("6_bxnhp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0.04)
+visible = false
+script = ExtResource("5_j6nu7")
+handle = "Grip"
+
+[node name="Support0L" type="Marker3D" parent="." unique_id=1580734664 instance=ExtResource("6_bxnhp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, -0.22)
+visible = false
+script = ExtResource("5_j6nu7")
+
+[node name="Support0R" type="Marker3D" parent="." unique_id=1092689489 instance=ExtResource("4_eulvt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, -0.22)
+visible = false
+script = ExtResource("5_j6nu7")
+hand = 1
+
+[node name="Support1L" type="Marker3D" parent="." unique_id=1666418221 instance=ExtResource("6_bxnhp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.2)
+visible = false
+script = ExtResource("5_j6nu7")
+
+[node name="Support1R" type="Marker3D" parent="." unique_id=1392219319 instance=ExtResource("4_eulvt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.2)
+visible = false
+script = ExtResource("5_j6nu7")
+hand = 1
+
+[node name="TriggerMesh" type="MeshInstance3D" parent="." unique_id=2043691502]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.015, 0)
+
+[node name="FirearmTrigger" type="Node" parent="." unique_id=602504979 node_paths=PackedStringArray("mesh_trigger")]
+script = ExtResource("7_iyasd")
+mesh_trigger = NodePath("../TriggerMesh")
+value = 0.3
+
+[node name="Muzzle" type="Marker3D" parent="." unique_id=429653986]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.4867809)
+
+[node name="Magazine" type="RigidBody3D" parent="." unique_id=810529619 groups=["mag_ak47"]]
+top_level = true
+collision_layer = 4
+collision_mask = 196615
+script = ExtResource("8_xwvkw")
+rounds = 30
+
+[node name="Mesh" type="MeshInstance3D" parent="Magazine" unique_id=1599580081]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5.5879354e-09, 0.0807706, 0.12487407)
+mesh = SubResource("ArrayMesh_op8q3")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Magazine" unique_id=194006668]
+shape = SubResource("BoxShape3D_73bva")
+
+[node name="GrabL" type="Marker3D" parent="Magazine" unique_id=165393077 instance=ExtResource("6_bxnhp")]
+visible = false
+script = ExtResource("5_j6nu7")
+
+[node name="GrabR" type="Marker3D" parent="Magazine" unique_id=409872815 instance=ExtResource("4_eulvt")]
+visible = false
+script = ExtResource("5_j6nu7")
+hand = 1
+
+[node name="MagazineWell" type="Area3D" parent="." unique_id=2046783340 instance=ExtResource("11_tbb5n")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5879354e-09, -0.0807706, -0.12487407)
+collision_layer = 4
+collision_mask = 65540
+script = ExtResource("12_qosfo")
+grab_distance = 0.06
+snap_require = "mag_ak47"
+initial_object = NodePath("../Magazine")
+
+[node name="SlideOrigin" type="Node3D" parent="." unique_id=622958898]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0.015, 0.02, -0.05)
+script = ExtResource("13_lh7eg")
+limit_maximum = 0.07
+
+[node name="Slide" type="Node3D" parent="SlideOrigin" unique_id=977789641]
+script = ExtResource("14_v1lmd")
+default_on_release = true
+
+[node name="SlideMesh" type="MeshInstance3D" parent="SlideOrigin/Slide" unique_id=27596954]
+mesh = SubResource("BoxMesh_esm0r")
+
+[node name="HandleOrigin" type="Node3D" parent="SlideOrigin/Slide" unique_id=178974365]
+
+[node name="InteractableHandle" type="RigidBody3D" parent="SlideOrigin/Slide/HandleOrigin" unique_id=1298470088 instance=ExtResource("15_xqpoc")]
+collision_layer = 262144
+collision_mask = 0
+gravity_scale = 0.0
+script = ExtResource("16_e5h6w")
+picked_up_layer = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SlideOrigin/Slide/HandleOrigin/InteractableHandle" unique_id=1347567436]
+shape = SubResource("SphereShape3D_e4gvx")
