@@ -70,5 +70,10 @@ func _init() -> void:
 	_expect(rp.picked_up_object == m, "sigue en la mano tras el golpe (pos %s)" % str(m.global_position))
 	await sim.look_at_point(c)
 	await _shot(sim, "tras_el_corte")
+	if is_instance_valid(npc) and npc.has_method("take_damage"):
+		npc.take_damage(10000.0, npc.global_position + Vector3(0, 1.4, 0), null, "head")
+		await sim.wait(2.5)
+		await sim.look_at_point(npc.global_position + Vector3(0, 0.1, 0))
+		await _shot(sim, "charco")
 	print("RESULTADO: %s (%d fallos)" % ["OK" if _fails == 0 else "FALLO", _fails])
 	quit(0 if _fails == 0 else 1)
