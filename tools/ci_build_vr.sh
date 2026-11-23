@@ -20,6 +20,8 @@ printf '\norg.gradle.daemon=false\norg.gradle.jvmargs=-Xmx3g\n' >> "$P/android/b
 python3 "$ROOT/tools/vr_project_settings.py" "$P/project.godot"
 sed -i "s#/data/data/com.termux/files/home/untitled-control/keys/debug.keystore#$KEYSTORE#g" "$P/export_presets.cfg"
 "$GODOT" --headless --path "$P" --import || true
+# Segunda pasada: deja la cache de import completa para que la exportacion no reimporte en bucle.
+"$GODOT" --headless --path "$P" --import || true
 if [ "${RELEASE:-0}" = "1" ]; then
   # Build de release: con sonido (el silencio solo aplica a builds de depuracion).
   # Firmada con el keystore de CI para poder instalarla en el Quest.
