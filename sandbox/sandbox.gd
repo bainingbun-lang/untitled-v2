@@ -127,9 +127,10 @@ func _equip_weapon() -> void:
 	var bm := BoxMesh.new()
 	bm.size = box.size
 	mi.mesh = bm
-	var wood := (load("res://assets/prototype_materials/wood_brown.tres") as StandardMaterial3D).duplicate() as StandardMaterial3D
-	wood.uv1_scale = Vector3.ONE * 0.5
-	mi.material_override = wood
+	var table_mat := WorldMaterials.surface_material("wood", true).duplicate() as StandardMaterial3D
+	table_mat.albedo_color = Color(1.55, 1.35, 1.1)  # mesa mas clara que el piso para que se distinga
+	table_mat.roughness = 0.45
+	mi.material_override = table_mat
 	table.add_child(mi)
 	add_child(table)
 	table.global_position = Vector3(0.0, TABLE_TOP / 2.0, TABLE_Z)
