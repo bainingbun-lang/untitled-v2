@@ -14,5 +14,9 @@
   {
     "name": "Escuela (CC0)",
     "scene": "res://maps/downloaded/school/school_map.tscn"
+  },
+  {
+    "name": "Instalación sci-fi (CC0)",
+    "scene": "res://maps/downloaded/scifi/facility_map.tscn"
   }
 ]

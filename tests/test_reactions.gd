@@ -6,6 +6,7 @@ var _fails := 0
 
 
 func _init() -> void:
+	await process_frame
 	var sc = load("res://maps/house_model/house_map.tscn").instantiate()
 	root.add_child(sc)
 	var t0 := Time.get_ticks_msec()
