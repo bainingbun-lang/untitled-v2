@@ -79,3 +79,16 @@ Versión estable con menú principal (Jugar, Mods, Configuración) y un sistema 
 - BLOQUEO: el jugador (`player/vr_player.tscn`, VRHand propio) no tiene XRToolsFunctionPickup, así que estas armas aún no se agarran en la sandbox ni están en el inventario (SCENES sigue apuntando a las armas antiguas). Siguiente paso: añadir FunctionPickup a cada mano del jugador sin romper puño/agarre de NPC/funda, y luego cambiar SCENES a las xr_*.
 - Sin verificar (requiere casco): posición/rotación de las manos en los grab points, orientación del cañón de la derringer (se asume -Z), que meter el cargador funcione soltándolo cerca del pozo (SnapZone en modo DROPPED, radio 6 cm), sensación del retroceso (solo visual, el modelo se desplaza y vuelve), y que el arma sostenida no choque con el cuerpo (xr-tools pone collision_mask=0 al agarrar).
 - Escopeta y subfusil usan cargador extraíble (escopeta tipo Saiga); la escopeta de tubo queda pendiente.
+
+## Jugador xr-tools en todas las escenas (sandbox, vr_menu y 3 mapas)
+Hecho y probado headless (`tests/test_xr_sandbox.gd`, `tests/test_xr_scenes.gd`): `player/xr_player.tscn` reemplaza a `vr_player.tscn`; mesa con pistola, AK, escopeta y subfusil con cargadores de repuesto; golpe de puño y agarre de NPC (`player/xr_hand_extras.gd`); fundas en la cintura (SnapZone, grupo `holsterable`); menu_button emite `menu_requested` y, fuera del menú, vuelve a `menu/vr_menu.tscn`.
+
+Causas de "no se puede agarrar / manos locas" encontradas y arregladas: (1) la mano que agarra la pistola se llevaba el cargador (la empuñadura y la boca del cargador casi coinciden): ahora `weapons/firearm/magazine_well.gd` solo deja sacar el cargador con el arma ya sujeta y con la otra mano; (2) las SnapZone no veían cuerpos congelados como estáticos: armas y cargadores usan `FREEZE_MODE_KINEMATIC` (y el arma ignora la colisión con su propio cargador); (3) al expulsar con A/X o B/Y la zona recapturaba el cargador (se desactiva 0.6 s).
+
+### No hecho / pendiente
+- Sin probar en casco: sensación del agarre, posición exacta de la mano en cada arma (agarres de escopeta/subfusil) y orientación de la escopeta MIT (en pantalla sale con la culata atrás; confirmar en el casco).
+- Subfusil: sin modelo libre. Los modelos de Kenney (weaponpack, CC0, `uzi`/`shotgun`) están en `untitled-control/refs/godot-vr-weapons/...` solo como `.import` y `.mtl`; falta el `.obj`. Sigue siendo una caja. Wintermute descartado (sin licencia).
+- Del jugador viejo no se portó: teletransporte (el nuevo usa movimiento directo + giro por pasos con xr-tools), ajustes de altura/`ControllerSettings`/`Settings.apply_to_player` (la clase `VRPlayer` sigue en el repo, sin usar), `bounds_escaped` (cabeza dentro de una pared), guantes animados, pausa. `Settings` y la pantalla de configuración no actúan sobre el jugador nuevo.
+- `Inventory`/`Holster`/`VrWeaponHand` del sandbox viejo ya no se instancian en el sandbox (siguen en el repo). Las fundas nuevas guardan armas xr_* sueltas dentro de la zona; no hay bolsillos de cargadores.
+- Menú VR: sigue con su puntero propio (rayo + `trigger_click`), no el FunctionPointer de xr-tools; la prueba demuestra que el clic llega a la UI.
+- Aviso "Lambda capture ... was freed" al liberar los mapas de colegio/oficina en pruebas: preexistente, sin SCRIPT ERROR.

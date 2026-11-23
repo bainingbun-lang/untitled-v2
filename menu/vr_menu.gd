@@ -33,12 +33,12 @@ func _ready() -> void:
 	_panel.material_override = mat
 	add_child(_panel)
 
-	var player := get_node_or_null("VRPlayer")
+	var player := get_node_or_null("XRPlayer")
 	if player == null:
 		return
-	_head = player.get_node_or_null("CharacterBody3D/Origin/Camera") as XRCamera3D
+	_head = player.get_node_or_null("XRCamera3D") as XRCamera3D
 	call_deferred("_place_panel")
-	for path in ["CharacterBody3D/Origin/LeftController", "CharacterBody3D/Origin/RightController"]:
+	for path in ["LeftHand", "RightHand"]:
 		var c := player.get_node_or_null(path) as XRController3D
 		if c != null:
 			_controllers.append(c)

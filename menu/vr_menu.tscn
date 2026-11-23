@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://menu/vr_menu.gd" id="1"]
-[ext_resource type="PackedScene" path="res://player/vr_player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://player/xr_player.tscn" id="2"]
 
 [node name="VrMenu" type="Node3D"]
 script = ExtResource("1")
 
-[node name="VRPlayer" parent="." instance=ExtResource("2")]
+[node name="XRPlayer" parent="." instance=ExtResource("2")]

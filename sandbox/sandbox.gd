@@ -6,17 +6,11 @@ const RemoteLog = preload("res://debug/remote_log.gd")
 const MapWorldBuilder = preload("res://maps/map_world_builder.gd")
 const HouseBuilder = preload("res://maps/house_builder.gd")
 const BasicNpc = preload("res://npc/basic_npc.gd")
-const VrWeaponHand = preload("res://weapons/vr_weapon_hand.gd")
-const GameConfig = preload("res://storage/game_config.gd")
-const FunctionPickup = preload("res://grab/function_pickup.gd")
-const InventoryScript = preload("res://inventory/inventory.gd")
 
 
 var _map_ok: bool = false
 var _npcs_ok: bool = false
 var _weapon_ok: bool = false
-var _weapon_hand: VrWeaponHand = null
-var _weapon_pickable: Node3D = null
 
 
 func _ready() -> void:
@@ -77,7 +71,7 @@ func _spawn_npcs() -> void:
 		Vector3(-3, 0.5, -1),
 		Vector3(-2.5, 0.5, 2.5),
 		Vector3(2.5, 0.5, -2.5),
-		Vector3(0, 0.5, -3),
+		Vector3(-1.9, 0.5, -3.3),
 		Vector3(-1, 0.5, 3),
 		Vector3(3, 0.5, 0),
 	].slice(0, MAX_NPCS)
@@ -90,7 +84,7 @@ func _spawn_npcs() -> void:
 		{"id": "npc_civil_3", "role": "civilian"},
 		{"id": "npc_armed_4", "role": "hostile", "armed": true},
 	]
-	var eye := get_node_or_null("VRPlayer/CharacterBody3D/Origin/Camera") as Node3D
+	var eye := get_node_or_null("XRPlayer/XRCamera3D") as Node3D
 	
 	var count: int = 0
 	for i in spawn_points.size():
@@ -111,149 +105,44 @@ func _spawn_npcs() -> void:
 		push_warning("Sandbox: solo ", count, " de ", spawn_points.size(), " NPCs spawneados")
 
 
+const TABLE_Z := -2.8
+const TABLE_TOP := 0.9
+## Armas xr-tools sobre la mesa: id, x. Cada una lleva un cargador de repuesto delante.
+const TABLE_WEAPONS := [["pistol", -0.55], ["ak47", -0.2], ["shotgun", 0.2], ["smg", 0.55]]
+
+
+## Mesa frente al jugador con armas agarrables y un cargador de repuesto de cada una.
 func _equip_weapon() -> void:
-	var player: Node3D = get_tree().get_first_node_in_group("player") as Node3D
-	if player == null:
-		player = get_node_or_null("VRPlayer") as Node3D
-	if player == null:
-		player = get_node_or_null("CharacterBody3D") as Node3D
-
-	if player == null:
-		push_warning("Sandbox: no se encontró jugador (VRPlayer/CharacterBody3D)")
-		_weapon_ok = false
-		return
-
-	var controller := player.get_node_or_null("CharacterBody3D/Origin/RightController") as XRController3D
-	if controller == null:
-		controller = player.get_node_or_null("RightHand") as XRController3D
-	if controller == null:
-		push_warning("Sandbox: no se encontró RightController (XRController3D)")
-		_weapon_ok = false
-		return
-
-	var hand_node := controller.get_node_or_null("VrWeaponHand")
-	if hand_node is VrWeaponHand:
-		_weapon_hand = hand_node
-	else:
-		_weapon_hand = VrWeaponHand.new()
-		_weapon_hand.name = "VrWeaponHand"
-		_weapon_hand.hand = "right"
-		_weapon_hand.auto_process = true
-		controller.add_child(_weapon_hand)
-
-	var pickup_node := controller.get_node_or_null("WeaponPickup")
-	var pickup: FunctionPickup
-	if pickup_node is FunctionPickup:
-		pickup = pickup_node
-	else:
-		pickup = FunctionPickup.new()
-		pickup.name = "WeaponPickup"
-		controller.add_child(pickup)
-	pickup.set_controller(controller)
-
-	_weapon_pickable = _create_weapon_ak(player)
-	if not is_instance_valid(_weapon_pickable):
-		push_warning("Sandbox: AK47 no válido")
-		_weapon_ok = false
-		return
-
-	if not pickup.has_picked_up.is_connected(_on_weapon_picked_up):
-		pickup.has_picked_up.connect(_on_weapon_picked_up)
-	if not pickup.has_dropped.is_connected(_on_weapon_dropped):
-		pickup.has_dropped.connect(_on_weapon_dropped)
-
-	# Agarre de xr-tools en las dos manos (las armas xr_* se toman con grip y disparan con el gatillo).
-	_add_xr_pickup(controller)
-	_spawn_xr_test_pistol(controller.get_parent())
-	var left_ctrl := controller.get_parent().get_node_or_null("LeftController") as XRController3D
-	if left_ctrl != null:
-		_add_xr_pickup(left_ctrl)
-	var origin := controller.get_parent()
-	var left := origin.get_node_or_null("LeftController") as XRController3D
-	var holster := Holster.new()
-	holster.controller = controller
-	holster.weapon = _weapon_pickable
-	origin.add_child(holster)
-	holster.position = Vector3(0.25, 0.8, 0.0)
-	# Funda visible en la cadera: sin esto el arma enfundada parece flotar.
-	var pouch := MeshInstance3D.new()
-	var pouch_mesh := BoxMesh.new()
-	pouch_mesh.size = Vector3(0.1, 0.14, 0.06)
-	pouch.mesh = pouch_mesh
-	var leather := StandardMaterial3D.new()
-	leather.albedo_color = Color(0.13, 0.1, 0.08)
-	leather.roughness = 0.9
-	pouch.material_override = leather
-	holster.add_child(pouch)
-	_weapon_pickable.global_position = holster.global_position
-
-	if left != null:
-		var inventory := InventoryScript.new()
-		inventory.name = "Inventory"
-		add_child(inventory)
-		inventory.setup(controller, left)
-		inventory.changed.connect(func() -> void:
-			var th: Node = inventory.right.weapon.get_node_or_null("TwoHanded") if is_instance_valid(inventory.right.weapon) else null
-			if th:
-				th.off_hand = left)
-		inventory.add(GameConfig.left_pocket)
-		holster.drawn.connect(func() -> void:
-			if inventory.right.id.is_empty() and not inventory.equip_right(GameConfig.right_pocket):
-				inventory.hold_existing(inventory.right, GameConfig.right_pocket, _weapon_pickable))
-		controller.button_released.connect(func(action: String) -> void:
-			if action == "grip_click" and inventory.right.id == GameConfig.right_pocket \
-					and controller.global_position.distance_to(holster.global_position) < holster.radius:
-				inventory.stow(inventory.right))
-		# Bolsillo izquierdo: se saca con la mano izquierda y se guarda apretando el grip cerca de la cadera.
-		var left_holster := Holster.new()
-		left_holster.controller = left
-		origin.add_child(left_holster)
-		left_holster.position = Vector3(-0.25, 0.8, 0.0)
-		var left_pouch := MeshInstance3D.new()
-		var left_pouch_mesh := BoxMesh.new()
-		left_pouch_mesh.size = Vector3(0.1, 0.14, 0.06)
-		left_pouch.mesh = left_pouch_mesh
-		var left_leather := StandardMaterial3D.new()
-		left_leather.albedo_color = Color(0.13, 0.1, 0.08)
-		left_leather.roughness = 0.9
-		left_pouch.material_override = left_leather
-		left_holster.add_child(left_pouch)
-		left_holster.drawn.connect(func() -> void:
-			if inventory.left.id.is_empty():
-				inventory.equip_left(GameConfig.left_pocket))
-		left.button_released.connect(func(action: String) -> void:
-			if action == "grip_click" and not inventory.left.id.is_empty() \
-					and left.global_position.distance_to(left_holster.global_position) < left_holster.radius:
-				inventory.stow(inventory.left))
-
-	_weapon_ok = true
-	print("Sandbox: AK47 en funda, grip en la funda para sacarla")
-
-
-func _create_weapon_ak(player: Node3D) -> Node3D:
-	var weapon := (load(inventory_scene(GameConfig.right_pocket)) as PackedScene).instantiate() as Node3D
-	add_child(weapon)
-	weapon.global_position = player.global_position + Vector3(0.35, 1.0, -0.25)
-	return weapon
-
-
-func _on_weapon_picked_up(what: Node3D) -> void:
-	if not is_instance_valid(_weapon_hand) or not is_instance_valid(what):
-		return
-	if _weapon_hand.weapon_id.is_empty():
-		_weapon_hand.weapon_id = "pistol"
-		var pose: Transform3D = _weapon_hand._pose("right")
-		_weapon_hand._aim_dir = VrWeaponHand.aim_direction(pose, Transform3D.IDENTITY, false)
-		_weapon_hand.weapon_taken.emit("pistol", "right")
-	print("Sandbox: arma agarrada con grip")
-
-
-func _on_weapon_dropped() -> void:
-	if is_instance_valid(_weapon_hand) and _weapon_hand.weapon_id == "pistol":
-		_weapon_hand.weapon_id = ""
-		_weapon_hand._two_hand = false
-		_weapon_hand.weapon_stowed.emit("pistol", "right")
-	print("Sandbox: arma soltada al liberar grip")
+	var table := StaticBody3D.new()
+	table.name = "WeaponTable"
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(1.8, TABLE_TOP, 1.2)
+	cs.shape = box
+	table.add_child(cs)
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = box.size
+	mi.mesh = bm
+	var wood := StandardMaterial3D.new()
+	wood.albedo_color = Color(0.45, 0.32, 0.2)
+	mi.material_override = wood
+	table.add_child(mi)
+	add_child(table)
+	table.global_position = Vector3(0.0, TABLE_TOP / 2.0, TABLE_Z)
+	var count := 0
+	for w in TABLE_WEAPONS:
+		var gun := (load("res://weapons/xr_%s.tscn" % w[0]) as PackedScene).instantiate() as Node3D
+		gun.name = "Table_" + w[0]
+		add_child(gun)
+		gun.global_position = Vector3(w[1], TABLE_TOP + 0.08, TABLE_Z)
+		var spare := gun.get_node("Magazine").duplicate() as Node3D
+		spare.name = "Spare_" + w[0]
+		add_child(spare)
+		spare.global_position = Vector3(w[1], TABLE_TOP + 0.08, TABLE_Z + 0.45)
+		count += 1
+	_weapon_ok = count == TABLE_WEAPONS.size()
+	print("Sandbox: mesa con %d armas xr-tools y cargadores de repuesto" % count)
 
 
 func _print_summary() -> void:
@@ -270,33 +159,3 @@ func _process(_delta: float) -> void:
 		RemoteLog.crumb("SANDBOX: frame 1")
 	elif frame == 60:
 		RemoteLog.crumb("SANDBOX: frame 60")
-
-
-## Ruta de escena de un arma por id (misma tabla que el inventario).
-static func inventory_scene(id: String) -> String:
-	var table := {"ak47": "res://weapons/ak47.tscn", "pistol": "res://weapons/pistol.tscn", "knife": "res://weapons/knife.tscn", "sniper": "res://weapons/sniper.tscn", "machete": "res://weapons/machete.tscn", "shotgun": "res://weapons/shotgun.tscn", "barrett": "res://weapons/barrett.tscn", "smg": "res://weapons/smg.tscn", "revolver": "res://weapons/revolver.tscn", "fusil": "res://weapons/fusil.tscn", "pdw": "res://weapons/pdw.tscn", "tanto": "res://weapons/tanto.tscn", "hacha": "res://weapons/hacha.tscn", "katana": "res://weapons/katana.tscn", "bate": "res://weapons/bate.tscn", "francotirador": "res://weapons/francotirador.tscn"}
-	return str(table.get(id, "res://weapons/ak47.tscn"))
-
-
-## Agrega el FunctionPickup de xr-tools a un mando. Las acciones se mapean a las de nuestro action_map.
-func _add_xr_pickup(ctrl: XRController3D) -> void:
-	if ctrl.get_node_or_null("XRPickup") != null:
-		return
-	var pickup_script = load("res://addons/godot-xr-tools/functions/function_pickup.gd")
-	var pk = pickup_script.new()
-	pk.name = "XRPickup"
-	pk.pickup_axis_action = "grip_click"
-	pk.action_button_action = "grab"
-	ctrl.add_child(pk)
-
-
-## Pistola xr-tools de prueba, frente al jugador a la altura de la cintura, para probar el agarre real.
-func _spawn_xr_test_pistol(origin: Node) -> void:
-	var packed := load("res://weapons/xr_pistol.tscn") as PackedScene
-	if packed == null:
-		push_warning("Sandbox: no se pudo cargar weapons/xr_pistol.tscn")
-		return
-	var pistol := packed.instantiate() as Node3D
-	add_child(pistol)
-	pistol.global_position = Vector3(0.0, 1.1, -0.8)
-	pistol.name = "XRPistolTest"

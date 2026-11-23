@@ -37,7 +37,7 @@ const WEAPONS := [
 		"slide": [Vector3(0.036, 0.0, 0.036), Vector3(0.014, 0.014, 0.05), 0.1],
 		"stats": {"damage": 400.0, "fire_interval": 0.8, "magazine_size": 10, "max_range": 400.0, "recoil_back": 0.08, "recoil_up_deg": 12.0},
 		"sound": "res://weapons/ak47/ak47_shot.wav"},
-	{"id": "shotgun", "body": [Vector3(0, 0, -0.15), Vector3(0.05, 0.08, 0.9)],
+	{"id": "shotgun", "model": "res://weapons/shotgun_mit/shotgun.tscn", "rot_y": 180.0, "scale": 0.55, "body": [Vector3(0, 0, -0.15), Vector3(0.05, 0.08, 0.9)],
 		"mag": [Vector3(0, -0.08, -0.02), Vector3(0.03, 0.1, 0.06)],
 		"grip": Vector3(0, -0.06, 0.1), "support": [Vector3(0, -0.05, -0.35), Vector3(0, -0.02, 0.25)], "muzzle_y": 0.02,
 		"slide": [Vector3(0, -0.055, -0.32), Vector3(0.06, 0.05, 0.16), 0.1],
@@ -56,7 +56,10 @@ var _root: Node
 
 func _init() -> void:
 	await process_frame
+	var only := OS.get_environment("ONLY") # ONLY=shotgun regenera solo esa arma
 	for cfg in WEAPONS:
+		if only != "" and cfg.id != only:
+			continue
 		var path := "res://weapons/xr_%s.tscn" % cfg.id
 		var packed := PackedScene.new()
 		var node := _build(cfg)
@@ -173,6 +176,7 @@ func _build(cfg: Dictionary) -> Node:
 		_add(mag, load(scene).instantiate(), "Grab" + ("L" if scene == HAND_L else "R"))
 
 	var well = _add(gun, load(SNAP).instantiate(), "MagazineWell")
+	well.set_script(load("res://weapons/firearm/magazine_well.gd"))
 	well.position = mag_center
 	well.grab_distance = 0.06
 	well.snap_require = "mag_" + cfg.id

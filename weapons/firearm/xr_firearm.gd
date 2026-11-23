@@ -32,10 +32,13 @@ var _model_rest: Transform3D
 var _trigger: Node
 var _muzzle: Node3D
 var _handle: XRToolsPickable
+var _eject_ctrl: XRController3D
 
 
 func _ready() -> void:
 	super()
+	add_to_group("holsterable")
+	freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC # las fundas (Area3D) no ven cuerpos estáticos
 	reload = WeaponReload.new(magazine_size)
 	_model = get_node_or_null("Model")
 	if _model:
@@ -46,6 +49,9 @@ func _ready() -> void:
 	_trigger = get_node_or_null("FirearmTrigger")
 	if _trigger:
 		_trigger.fired.connect(try_fire)
+	var own_mag := get_node_or_null("Magazine") as PhysicsBody3D
+	if own_mag:
+		add_collision_exception_with(own_mag) # un cargador cinemático dentro del arma la empujaría
 	var well := get_node_or_null("MagazineWell")
 	if well:
 		well.has_picked_up.connect(_on_mag_in)
@@ -56,6 +62,8 @@ func _ready() -> void:
 		_handle = slide.get_node_or_null("HandleOrigin/InteractableHandle")
 	picked_up.connect(func(_p): _set_handle(true))
 	dropped.connect(func(_p): _set_handle(false))
+	grabbed.connect(func(_p, _by): _bind_eject())
+	released.connect(func(_p, _by): _bind_eject())
 	_set_handle(false)
 
 
@@ -126,6 +134,29 @@ func _on_slide_moved(pos: float) -> void:
 	elif _slide_back and pos <= limit * 0.1:
 		_slide_back = false
 		reload.rack_slide()
+
+
+## Con el arma en la mano, A/X o B/Y de esa mano expulsa el cargador (alternativa a sacarlo con la otra mano).
+func _bind_eject() -> void:
+	var c := get_picked_up_by_controller()
+	if _eject_ctrl == c:
+		return
+	if is_instance_valid(_eject_ctrl):
+		_eject_ctrl.button_pressed.disconnect(_on_eject_button)
+	_eject_ctrl = c
+	if c:
+		c.button_pressed.connect(_on_eject_button)
+
+
+func _on_eject_button(action: String) -> void:
+	if action == "ax_button" or action == "by_button":
+		var well := get_node_or_null("MagazineWell")
+		if well and well.has_snapped_object():
+			var mag: RigidBody3D = well.picked_up_object
+			well.enabled = false # si no, la zona lo vuelve a capturar al soltarlo
+			well.drop_object()
+			mag.linear_velocity = global_basis * Vector3(0.0, -1.5, 0.0)
+			get_tree().create_timer(0.6).timeout.connect(func(): well.enabled = true)
 
 
 func _set_handle(on: bool) -> void:
