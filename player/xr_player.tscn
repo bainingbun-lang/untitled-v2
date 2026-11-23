@@ -1,0 +1,65 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://player/xr_player.gd" id="1_player"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/hands/scenes/collision/collision_hand.tscn" id="2_col"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/left_hand_low.tscn" id="3_lh"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/hands/scenes/lowpoly/right_hand_low.tscn" id="4_rh"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="5_pick"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/functions/movement_direct.tscn" id="6_dir"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/functions/movement_turn.tscn" id="7_turn"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/player/player_body.tscn" id="8_body"]
+[ext_resource type="PackedScene" path="res://addons/godot-xr-tools/functions/movement_sprint.tscn" id="9_sprint"]
+
+[node name="XRPlayer" type="XROrigin3D" groups=["player"]]
+script = ExtResource("1_player")
+
+[node name="XRCamera3D" type="XRCamera3D" parent="."]
+near = 0.03
+
+[node name="LeftHand" type="XRController3D" parent="."]
+tracker = &"left_hand"
+pose = &"grip"
+show_when_tracked = true
+
+[node name="CollisionHandLeft" parent="LeftHand" node_paths=PackedStringArray("hand_skeleton") instance=ExtResource("2_col")]
+hand_skeleton = NodePath("LeftHand/Hand_Nails_low_L/Armature/Skeleton3D")
+
+[node name="LeftHand" parent="LeftHand/CollisionHandLeft" instance=ExtResource("3_lh")]
+
+[node name="Hand_Nails_low_L" parent="LeftHand/CollisionHandLeft/LeftHand" index="0"]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, -0.01, 0.03535534, 0.03535534)
+
+[node name="FunctionPickup" parent="LeftHand/CollisionHandLeft" instance=ExtResource("5_pick")]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
+grab_distance = 0.15
+ranged_angle = 15.0
+
+[node name="MovementDirect" parent="LeftHand/CollisionHandLeft" instance=ExtResource("6_dir")]
+strafe = true
+
+[node name="RightHand" type="XRController3D" parent="."]
+tracker = &"right_hand"
+pose = &"grip"
+show_when_tracked = true
+
+[node name="CollisionHandRight" parent="RightHand" node_paths=PackedStringArray("hand_skeleton") instance=ExtResource("2_col")]
+hand_skeleton = NodePath("RightHand/Hand_Nails_low_R/Armature/Skeleton3D")
+
+[node name="RightHand" parent="RightHand/CollisionHandRight" instance=ExtResource("4_rh")]
+
+[node name="Hand_Nails_low_R" parent="RightHand/CollisionHandRight/RightHand" index="0"]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0.01, 0.03535534, 0.03535534)
+
+[node name="FunctionPickup" parent="RightHand/CollisionHandRight" instance=ExtResource("5_pick")]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
+grab_distance = 0.15
+ranged_angle = 15.0
+
+[node name="MovementTurn" parent="RightHand/CollisionHandRight" instance=ExtResource("7_turn")]
+
+[node name="PlayerBody" parent="." instance=ExtResource("8_body")]
+
+[node name="MovementSprint" parent="." instance=ExtResource("9_sprint")]
+
+[editable path="LeftHand/CollisionHandLeft/LeftHand"]
+[editable path="RightHand/CollisionHandRight/RightHand"]

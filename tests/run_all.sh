@@ -23,4 +23,5 @@ run "arsenal (todas las armas cargan)" res://tests/test_arsenal.gd "RESULTADO: O
 run "reacciones (alarma al caer un NPC)" res://tests/test_reactions.gd "RESULTADO: OK"
 run "combate (perdigones, cabeza)" res://tests/test_combat.gd "RESULTADO: OK"
 run "armas xr-tools (agarre, gatillo, cargador, corredera)" res://tests/test_xr_weapons.gd "RESULTADO: OK"
+run "jugador xr-tools (manos con zip, agarre)" res://tests/test_xr_player.gd "RESULTADO: OK"
 exit $fail
