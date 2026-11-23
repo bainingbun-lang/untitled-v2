@@ -12,7 +12,7 @@ const SLIDER_ORIGIN := XRA + "interactables/interactable_slider_origin.gd"
 const SLIDER := XRA + "interactables/interactable_slider.gd"
 
 const WEAPONS := [
-	{"id": "pistol", "model": "res://weapons/pistol_cc0/derringer.glb", "rot_y": 0.0, "scale": 1.0,
+	{"id": "pistol", "model": "res://weapons/models/quaternius/Pistol_1.glb", "rot_y": 90.0, "scale": 0.1,
 		"body": [Vector3(0.0, -0.022, 0.0), Vector3(0.02, 0.07, 0.12)],
 		"mag": [Vector3(0, -0.04, 0.035), Vector3(0.014, 0.045, 0.022)],
 		"grip": Vector3(0, -0.035, 0.035), "support": [], "muzzle_y": 0.0,
@@ -43,7 +43,7 @@ const WEAPONS := [
 		"slide": [Vector3(0, -0.055, -0.32), Vector3(0.06, 0.05, 0.16), 0.1],
 		"stats": {"damage": 160.0, "pellets": 8, "spread_deg": 4.0, "fire_interval": 0.6, "magazine_size": 6, "max_range": 40.0, "recoil_back": 0.06, "recoil_up_deg": 12.0},
 		"sound": "res://weapons/shotgun/shotgun_shot.wav"},
-	{"id": "smg", "body": [Vector3(0, 0, -0.08), Vector3(0.05, 0.1, 0.4)],
+	{"id": "smg", "model": "res://weapons/models/quaternius/Bullpup_2.glb", "rot_y": 90.0, "scale": 0.146, "body": [Vector3(0, 0, -0.08), Vector3(0.05, 0.1, 0.4)],
 		"mag": [Vector3(0, -0.11, -0.06), Vector3(0.025, 0.14, 0.035)],
 		"grip": Vector3(0, -0.07, 0.06), "support": [Vector3(0, -0.03, -0.2)], "muzzle_y": 0.02,
 		"slide": [Vector3(0, 0.055, 0.0), Vector3(0.012, 0.012, 0.03), 0.04],
