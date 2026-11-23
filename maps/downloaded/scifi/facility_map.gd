@@ -5,7 +5,9 @@ extends Node3D
 ## con GLTFDocument desde bytes (funciona dentro del PCK) y se cachean; si una falla, se usa una caja.
 const NpcSpawner = preload("res://npc/npc_spawner.gd")
 const NpcReactions = preload("res://npc/npc_reactions.gd")
-const PIECES := "res://maps/downloaded/scifi/pieces/"
+const PACK := "res://assets/packs/scifi_pieces.zip"
+## Las piezas viven en un ZIP (sin importar) y se descomprimen una vez en user:// al abrir el mapa.
+const PIECES := "user://scifi_pieces/"
 const CELL := 4.0
 const WALL_H := 3.05
 ## Letra = zona ('.' vacio, 'c' corredor). Filas = z, columnas = x.
@@ -37,11 +39,13 @@ const PROPS := [
 const CEIL_LIGHTS := [[1.5, 1.5], [5.5, 1.5], [9.5, 1.5], [2.5, 5.5], [8.0, 5.5], [2.0, 3.0], [6.0, 3.0], [10.0, 3.0]]
 
 var _cache := {}
+var _soft := {}
 var _mats := {}
 var _floors: Array = []
 
 
 func _ready() -> void:
+	ensure_pieces()
 	_setup_environment()
 	var rows: int = GRID.size()
 	var cols: int = (GRID[0] as String).length()
@@ -72,6 +76,30 @@ func _at(x: int, z: int) -> String:
 
 func _is_door(x: int, z: int, side: String) -> bool:
 	return DOORS.any(func(d): return d[0] == x and d[1] == z and d[2] == side)
+
+
+## Descomprime el ZIP de piezas en user:// si aun no esta (o si cambio de tamano).
+static func ensure_pieces() -> bool:
+	var zr := ZIPReader.new()
+	if zr.open(PACK) != OK:
+		return false
+	var stamp := PIECES + ".stamp"
+	var size := str(FileAccess.get_file_as_bytes(PACK).size())
+	if FileAccess.file_exists(stamp) and FileAccess.get_file_as_string(stamp) == size:
+		zr.close()
+		return true
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(PIECES))
+	for f in zr.get_files():
+		var fa := FileAccess.open(PIECES + f.get_file(), FileAccess.WRITE)
+		if fa != null:
+			fa.store_buffer(zr.read_file(f))
+			fa.close()
+	zr.close()
+	var st := FileAccess.open(stamp, FileAccess.WRITE)
+	if st != null:
+		st.store_string(size)
+		st.close()
+	return true
 
 
 ## Obtiene una copia de la pieza (cacheada). Respaldo: caja gris con aviso.
@@ -117,12 +145,34 @@ func _tint(n: Node3D, color: Color) -> void:
 		(mi as MeshInstance3D).material_override = _mats[key]
 
 
+## Las texturas del pack son muy metalicas y sin reflejos se ven negras: se baja el metal y se
+## sube la rugosidad para que la luz de ambiente las ilumine.
+func _soften_metal(n: Node3D) -> void:
+	for mi in _meshes(n):
+		var inst := mi as MeshInstance3D
+		if inst.mesh == null:
+			continue
+		for i in inst.mesh.get_surface_count():
+			var m := inst.mesh.surface_get_material(i) as StandardMaterial3D
+			if m == null:
+				continue
+			var key := m.get_instance_id()
+			if not _soft.has(key):
+				var c := m.duplicate() as StandardMaterial3D
+				c.metallic = minf(c.metallic, 0.2)
+				c.roughness = maxf(c.roughness, 0.55)
+				_soft[key] = c
+			inst.set_surface_override_material(i, _soft[key])
+
+
 func _put(name: String, pos: Vector3, yaw: float, color: Color, solid: bool, scl := Vector3.ONE) -> Node3D:
 	var n := _piece(name)
 	n.position = pos
 	n.rotation.y = yaw
 	n.scale = scl
-	_tint(n, color)
+	if color.a < 0.0:
+		_tint(n, color)  # solo si se pide un color explicito; por defecto se conservan las texturas
+	_soften_metal(n)
 	add_child(n)
 	if solid:
 		for mi in _meshes(n):
