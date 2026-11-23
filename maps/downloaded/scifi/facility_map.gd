@@ -45,6 +45,9 @@ var _floors: Array = []
 
 
 func _ready() -> void:
+	var _vg := Node.new()
+	_vg.set_script(load("res://player/void_guard.gd"))
+	add_child(_vg)
 	ensure_pieces()
 	_setup_environment()
 	var rows: int = GRID.size()

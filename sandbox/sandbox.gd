@@ -14,6 +14,9 @@ var _weapon_ok: bool = false
 
 
 func _ready() -> void:
+	var _vg := Node.new()
+	_vg.set_script(load("res://player/void_guard.gd"))
+	add_child(_vg)
 	RemoteLog.crumb("SANDBOX: ready start")
 	_build_house()
 	await get_tree().physics_frame
