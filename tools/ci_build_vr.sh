@@ -19,6 +19,11 @@ BV="$("$GODOT" --version 2>/dev/null | sed -n 's/^\([0-9.]*stable\).*/\1/p' | he
 printf '\norg.gradle.daemon=false\norg.gradle.jvmargs=-Xmx3g\n' >> "$P/android/build/gradle.properties"
 python3 "$ROOT/tools/vr_project_settings.py" "$P/project.godot"
 sed -i "s#/data/data/com.termux/files/home/untitled-control/keys/debug.keystore#$KEYSTORE#g" "$P/export_presets.cfg"
+# Los .import del repo salen de otra version de Godot (Termux 4.7.2); en CI se regeneran desde cero.
+if [ "${CLEAN_IMPORTS:-0}" = "1" ]; then
+  find "$P" -name '*.import' -not -path "$P/android/*" -delete
+  rm -rf "$P/.godot/imported" "$P/.godot/uid_cache.bin" "$P/.godot/global_script_class_cache.cfg"
+fi
 "$GODOT" --headless --path "$P" --import || true
 # Segunda pasada: deja la cache de import completa para que la exportacion no reimporte en bucle.
 "$GODOT" --headless --path "$P" --import || true
