@@ -11,7 +11,7 @@ const GameConfig = preload("res://storage/game_config.gd")
 const CATALOG := "res://maps/catalog.json"
 const DIFFICULTIES := [["Fácil", "facil"], ["Normal", "normal"], ["Difícil", "dificil"]]
 const GORE_LEVELS := ["Apagado", "Normal", "Extremo"]
-const POCKET_LABELS := {"pistol": "Pistola", "ak47": "AK-47", "knife": "Cuchillo", "sniper": "Sniper", "machete": "Machete", "shotgun": "Escopeta", "barrett": "Barrett", "smg": "Subfusil", "revolver": "Revólver", "fusil": "Fusil de asalto", "pdw": "PDW", "tanto": "Tanto", "hacha": "Hacha", "katana": "Katana", "bate": "Bate de béisbol", "francotirador": "Francotirador (modelo CC0)"}
+const POCKET_LABELS := {"pistol": "Pistola", "ak47": "AK-47", "knife": "Cuchillo", "sniper": "Sniper", "machete": "Machete", "shotgun": "Escopeta", "barrett": "Barrett", "smg": "Subfusil", "revolver": "Revólver", "fusil": "Fusil de asalto", "pdw": "PDW", "tanto": "Tanto", "hacha": "Hacha", "katana": "Katana", "bate": "Bate de béisbol", "francotirador": "Francotirador (modelo CC0)", "xr_pistol": "Pistola XR (agarre real)", "xr_ak47": "AK XR", "xr_sniper": "Sniper XR", "xr_barrett": "Barrett XR", "xr_shotgun": "Escopeta XR", "xr_smg": "Subfusil XR"}
 
 const BG := Color("0d1014")
 const CARD := Color("161b22")
