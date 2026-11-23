@@ -9,6 +9,7 @@ extends XROrigin3D
 signal menu_requested
 
 const HandExtras = preload("res://player/xr_hand_extras.gd")
+const MagPouch = preload("res://player/mag_pouch.gd")
 const SNAP_ZONE := preload("res://addons/godot-xr-tools/objects/snap_zone.tscn")
 const HIP_X := 0.22
 const HIP_DROP := 0.7
@@ -57,6 +58,10 @@ func _build_holsters() -> void:
 	holster_left = _add_holster("HolsterLeft", -HIP_X)
 	holster_back_right = _add_holster("HolsterBackRight", 0.18, 0.3, 0.2)
 	holster_back_left = _add_holster("HolsterBackLeft", -0.18, 0.3, 0.2)
+	var pouch := MagPouch.new()
+	holsters.add_child(pouch)
+	pouch.setup(self)
+	pouch.position = Vector3(0.0, 0.38, -0.15)
 
 
 ## Pone en cada funda el arma elegida en Configuración (cadera derecha / izquierda); se saca con grip cerca de la cadera.

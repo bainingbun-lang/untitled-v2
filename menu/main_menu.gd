@@ -251,6 +251,13 @@ func _show_settings() -> void:
 	diff.item_selected.connect(func(i: int) -> void: GameConfig.set_difficulty(DIFFICULTIES[i][1]); _save())
 	_content.add_child(_setting_row("Dificultad", diff))
 
+	var mags := OptionButton.new()
+	mags.add_item("Infinitos", 0)
+	mags.add_item("Limitados", 1)
+	mags.select(0 if GameConfig.infinite_mags else 1)
+	mags.item_selected.connect(func(i: int) -> void: GameConfig.infinite_mags = i == 0; _save())
+	_content.add_child(_setting_row("Cargadores", mags))
+
 	_content.add_child(_spacer_v())
 	_content.add_child(_heading("Población"))
 	var dens := OptionButton.new()

@@ -16,3 +16,7 @@ weapons/models/quaternius/*.glb (Pistol_1, Bullpup_2, Revolver_1) — https://qu
 ## Sangre
 - Manchas procedurales (gore/gore_textures.gd, `_blob`): idea del splat con radio deformado por ruido de Alenvei/GODOT4-Blood-splatter-Tutorial (MIT, Copyright (c) 2023 Alenvei), https://github.com/Alenvei/GODOT4-Blood-splatter-Tutorial. Codigo propio, no se copio el shader.
 - Churretes que resbalan por paredes (gore/wound_decals.gd, `add_run`): implementacion propia. No se uso codigo de repos sin licencia (Godot_Dismemberment, bloodstain).
+
+## Municion y cargadores
+- `weapons/ammo_reserve.gd`: adaptado de `godot_weapon_manager` (MIT, Copyright (c) 2023 Colormatic), `resources/weapons/ammo/ammo_reserve.gd`; se quita el EventBus y se conservan `add_ammo_to_reserve` y `take_ammo_from_reserve`.
+- `player/mag_pouch.gd` (bolsa de cargadores del pecho): codigo propio; ninguno de los repositorios de referencia trae un dispensador. Consultados sin copiar codigo: godot-xr-tools `belt_snap_zone.tscn` y godot-vr-weapons `m1911.gd` (ambos MIT).
