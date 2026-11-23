@@ -21,6 +21,7 @@ func _init() -> void:
 	var obj = player.holster_right.picked_up_object
 	_expect(obj != null and obj.name == "XR_machete", "funda derecha tiene el machete")
 	var m: Node3D = obj
+	_expect(m.hit_sound != null and m.swing_sound != null and m.gore_sound != null, "machete con los 3 sonidos")
 	var dummy := Node3D.new()
 	var s := GDScript.new()
 	s.source_code = "extends Node3D\nvar hp := 100.0\nfunc take_damage(a, _p = Vector3.ZERO, _s = null, _z = \"\"):\n\thp -= a\n"
@@ -31,5 +32,6 @@ func _init() -> void:
 	_expect(slow.is_empty() and dummy.hp == 100.0, "golpe lento no corta")
 	var fast: Dictionary = m.cut(dummy, Vector3(0, 1, 0), Vector3(6, 0, 0))
 	_expect(not fast.is_empty() and dummy.hp < 100.0, "golpe rapido corta y daña (hp %.1f)" % dummy.hp)
+	_expect(m._hit.playing, "suena el impacto al cortar")
 	print("RESULTADO: ", "OK" if fails == 0 else "%d fallos" % fails)
 	quit(1 if fails else 0)

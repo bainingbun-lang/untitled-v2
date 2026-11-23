@@ -5,6 +5,9 @@
 [ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_right.tscn" id="3_gr"]
 [ext_resource type="Script" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand.gd" id="4_gp"]
 [ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_left.tscn" id="5_gl"]
+[ext_resource type="AudioStream" path="res://weapons/melee/sounds/machete_swish.wav" id="6_sw"]
+[ext_resource type="AudioStream" path="res://weapons/melee/sounds/machete_hit.wav" id="7_hit"]
+[ext_resource type="AudioStream" path="res://weapons/melee/sounds/machete_gore.wav" id="8_gore"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_body"]
 size = Vector3(0.54, 0.05, 0.012)
@@ -18,6 +21,9 @@ collision_mask = 196615
 mass = 0.3
 script = ExtResource("1_melee")
 base_damage = 40.0
+swing_sound = ExtResource("6_sw")
+hit_sound = ExtResource("7_hit")
+gore_sound = ExtResource("8_gore")
 
 [node name="Model" type="Node3D" parent="."]
 transform = Transform3D(0, 0, 1, 0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0.104, -0.06)

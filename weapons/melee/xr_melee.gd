@@ -7,7 +7,10 @@ const NECK_CUTS := 4
 @export var max_cut_speed := 10.0
 @export var base_damage := 25.0
 @export var cut_cooldown := 0.35
+@export var swing_sound: AudioStream
 @export var hit_sound: AudioStream
+@export var gore_sound: AudioStream
+@export var swing_speed := 3.0
 
 @onready var blade: Area3D = $Model/Blade
 
@@ -15,7 +18,10 @@ var _blade_velocity := Vector3.ZERO
 var _last_blade_pos := Vector3.ZERO
 var _cooldowns: Dictionary = {}
 var _neck_progress: Dictionary = {}
-var _player: AudioStreamPlayer3D
+var _swing: AudioStreamPlayer3D
+var _hit: AudioStreamPlayer3D
+var _gore: AudioStreamPlayer3D
+var _swing_cd := 0.0
 
 
 func _ready() -> void:
@@ -23,16 +29,34 @@ func _ready() -> void:
 	add_to_group("holsterable")
 	_last_blade_pos = blade.global_position
 	blade.body_entered.connect(_on_blade_body_entered)
-	if hit_sound != null:
-		_player = AudioStreamPlayer3D.new()
-		_player.stream = hit_sound
-		blade.add_child(_player)
+	_swing = _make(swing_sound)
+	_hit = _make(hit_sound)
+	_gore = _make(gore_sound)
+
+
+func _make(stream: AudioStream) -> AudioStreamPlayer3D:
+	if stream == null:
+		return null
+	var p := AudioStreamPlayer3D.new()
+	p.stream = stream
+	blade.add_child(p)
+	return p
+
+
+func _play(p: AudioStreamPlayer3D) -> void:
+	if p != null:
+		p.pitch_scale = randf_range(0.92, 1.08)
+		p.play()
 
 
 func _physics_process(delta: float) -> void:
 	var pos := blade.global_position
 	_blade_velocity = (pos - _last_blade_pos) / maxf(delta, 0.0001)
 	_last_blade_pos = pos
+	_swing_cd -= delta
+	if _swing_cd <= 0.0 and _blade_velocity.length() >= swing_speed and get_picked_up_by_controller() != null:
+		_play(_swing)
+		_swing_cd = 0.45
 	for body in _cooldowns.keys():
 		_cooldowns[body] -= delta
 		if _cooldowns[body] <= 0.0 or not is_instance_valid(body):
@@ -56,9 +80,7 @@ func cut(body: Node3D, point: Vector3, velocity: Vector3) -> Dictionary:
 	var ctrl := get_picked_up_by_controller()
 	BulletImpact.apply(body, point, -dir, damage, ctrl)
 	var result := {"damage": damage, "dismembered": false, "sliced": false}
-	if _player != null:
-		_player.pitch_scale = randf_range(0.92, 1.08)
-		_player.play()
+	_play(_hit)
 	if ctrl != null:
 		ctrl.trigger_haptic_pulse("haptic", 0.0, lerpf(0.3, 1.0, t), 0.08, 0.0)
 	if body.has_method("take_damage") and point.y > body.global_position.y + 1.35:
@@ -66,12 +88,15 @@ func cut(body: Node3D, point: Vector3, velocity: Vector3) -> Dictionary:
 		_neck_progress[body] = cuts
 		if cuts >= NECK_CUTS:
 			result["decapitated"] = _decapitate(body, point, -dir)
+			_play(_gore)
 			return result
 	if speed >= dismember_speed:
 		var skeleton := VrKnife._find_skeleton(body)
 		var bone := VrKnife.pick_limb_bone(skeleton, point)
 		if bone >= 0:
 			result["dismembered"] = not GoreSystem.dismember_limb(body, bone, skeleton, point, -dir).is_empty()
+			if result["dismembered"]:
+				_play(_gore)
 		if body.is_in_group("sliceable"):
 			var normal := blade.global_basis.x.cross(dir)
 			for mi in body.find_children("*", "MeshInstance3D", true, false):
