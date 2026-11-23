@@ -124,8 +124,8 @@ func _equip_weapon() -> void:
 	var bm := BoxMesh.new()
 	bm.size = box.size
 	mi.mesh = bm
-	var wood := StandardMaterial3D.new()
-	wood.albedo_color = Color(0.45, 0.32, 0.2)
+	var wood := (load("res://assets/prototype_materials/wood_brown.tres") as StandardMaterial3D).duplicate() as StandardMaterial3D
+	wood.uv1_scale = Vector3.ONE * 0.5
 	mi.material_override = wood
 	table.add_child(mi)
 	add_child(table)
