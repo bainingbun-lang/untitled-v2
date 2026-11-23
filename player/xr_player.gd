@@ -22,6 +22,8 @@ const HIP_DROP := 0.7
 var holsters: Node3D
 var holster_left: Node3D
 var holster_right: Node3D
+var holster_back_left: Node3D
+var holster_back_right: Node3D
 
 
 func _ready() -> void:
@@ -53,6 +55,8 @@ func _build_holsters() -> void:
 	add_child(holsters)
 	holster_right = _add_holster("HolsterRight", HIP_X)
 	holster_left = _add_holster("HolsterLeft", -HIP_X)
+	holster_back_right = _add_holster("HolsterBackRight", 0.18, 0.3, 0.2)
+	holster_back_left = _add_holster("HolsterBackLeft", -0.18, 0.3, 0.2)
 
 
 ## Pone en cada funda el arma elegida en Configuración (cadera derecha / izquierda); se saca con grip cerca de la cadera.
@@ -68,7 +72,7 @@ func _fill_holsters() -> void:
 		pair[0].pick_up_object(gun)
 
 
-func _add_holster(n: String, x: float) -> Node3D:
+func _add_holster(n: String, x: float, y := 0.0, z := 0.0) -> Node3D:
 	var zone := SNAP_ZONE.instantiate() as Node3D
 	zone.name = n
 	zone.snap_require = "holsterable"
@@ -82,7 +86,7 @@ func _add_holster(n: String, x: float) -> Node3D:
 	mi.material_override = mat
 	zone.add_child(mi)
 	holsters.add_child(zone)
-	zone.position = Vector3(x, 0.0, 0.0)
+	zone.position = Vector3(x, y, z)
 	return zone
 
 

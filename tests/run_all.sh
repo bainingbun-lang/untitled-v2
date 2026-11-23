@@ -28,6 +28,7 @@ run "jugador xr-tools (manos con zip, agarre)" res://tests/test_xr_player.gd "RE
 run "fundas con arma al inicio" res://tests/test_fundas.gd "RESULTADO: OK"
 run "machete XR (funda, corte, sonidos)" res://tests/test_xr_machete.gd "RESULTADO: OK"
 run "menu de armas" res://tests/test_weapon_menu.gd "RESULTADO: OK"
+run "botin de NPC (arma y cargador)" res://tests/test_loot.gd "RESULTADO: OK"
 run "simulador: menu, machete y corte a un NPC" res://tests/test_sim_machete.gd "RESULTADO: OK"
 run "mapa instalacion sci-fi (piezas, colision, NPC)" res://tests/test_facility_map.gd "RESULTADO: OK"
 run "sandbox xr (mesa, agarre, cargador, corredera, disparo, puñetazo)" res://tests/test_xr_sandbox.gd "RESULTADO: OK"

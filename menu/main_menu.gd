@@ -251,23 +251,6 @@ func _show_settings() -> void:
 	diff.item_selected.connect(func(i: int) -> void: GameConfig.set_difficulty(DIFFICULTIES[i][1]); _save())
 	_content.add_child(_setting_row("Dificultad", diff))
 
-	var pocket := OptionButton.new()
-	var keys: Array = GameConfig.POCKET_WEAPONS
-	for i in keys.size():
-		pocket.add_item(POCKET_LABELS.get(keys[i], keys[i]), i)
-		if keys[i] == GameConfig.left_pocket:
-			pocket.select(i)
-	pocket.item_selected.connect(func(i: int) -> void: GameConfig.set_left_pocket(keys[i]); _save())
-	_content.add_child(_setting_row("Bolsillo izquierdo", pocket))
-
-	var rpocket := OptionButton.new()
-	for i in keys.size():
-		rpocket.add_item(POCKET_LABELS.get(keys[i], keys[i]), i)
-		if keys[i] == GameConfig.right_pocket:
-			rpocket.select(i)
-	rpocket.item_selected.connect(func(i: int) -> void: GameConfig.right_pocket = keys[i]; _save())
-	_content.add_child(_setting_row("Bolsillo derecho", rpocket))
-
 	_content.add_child(_spacer_v())
 	_content.add_child(_heading("Población"))
 	var dens := OptionButton.new()
