@@ -13,7 +13,8 @@ for e in "$ROOT"/* "$ROOT"/.godot; do b="$(basename "$e")"; case "$b" in build|b
 T="$(mktemp -d)"; curl -fsSL "$VENDOR_URL" -o "$T/v.zip"; echo "$VENDOR_SHA256  $T/v.zip" | sha256sum -c -
 unzip -q "$T/v.zip" -d "$T/u"; A="$(find "$T/u" -type d -name godotopenxrvendors | head -1)"; [ -n "$A" ] || { echo "sin addon"; exit 1; }
 cp -r "$A" "$P/addons/"
-unzip -q "$TEMPLATE_ZIP" -d "$P/android/build"; touch "$P/android/.gdignore"; find "$P/android" -name '*.import' -type f -delete
+unzip -q "$TEMPLATE_ZIP" -d "$P/android/build"; if [ -d /data/data/com.termux ]; then sed -i "1s|^#!.*|#!/data/data/com.termux/files/usr/bin/sh|" "$P/android/build/gradlew"; fi
+touch "$P/android/.gdignore"; find "$P/android" -name '*.import' -type f -delete
 BV="$("$GODOT" --version 2>/dev/null | sed -n 's/^\([0-9.]*stable\).*/\1/p' | head -1)"; printf '%s' "${BV:-4.7.stable}" > "$P/android/.build_version"
 printf '\norg.gradle.daemon=false\norg.gradle.jvmargs=-Xmx3g\n' >> "$P/android/build/gradle.properties"
 python3 "$ROOT/tools/vr_project_settings.py" "$P/project.godot"
