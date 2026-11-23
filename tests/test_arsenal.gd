@@ -9,6 +9,7 @@ var _fails := 0
 
 
 func _init() -> void:
+	await process_frame  # autoloads del addon xr-tools antes de compilar armas xr
 	var inv = Inv.new()
 	for id in Inv.SCENES.keys():
 		var path: String = Inv.SCENES[id]

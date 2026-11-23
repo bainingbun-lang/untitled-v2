@@ -26,14 +26,31 @@ func _ready() -> void:
 func hold(weapon_id: String, node: Node3D) -> void:
 	id = weapon_id
 	weapon = node
-	if weapon.has_method("pick_up"):
+	if _is_xr_weapon():
+		# Arma xr-tools: se agarra con el FunctionPickup de su mando.
+		var pk := _xr_pickup()
+		if pk != null:
+			weapon.call("pick_up", pk)
+	elif weapon.has_method("pick_up"):
 		weapon.call("pick_up", controller, controller)
+
+
+func _is_xr_weapon() -> bool:
+	return is_instance_valid(weapon) and weapon.has_method("try_fire")
+
+
+func _xr_pickup() -> Node:
+	return controller.get_node_or_null("XRPickup") if controller else null
 
 
 func release() -> String:
 	var old := id
 	if is_instance_valid(weapon):
-		if weapon.has_method("let_go"):
+		if _is_xr_weapon():
+			var pk := _xr_pickup()
+			if pk != null and weapon.has_method("let_go"):
+				weapon.call("let_go", pk, Vector3.ZERO, Vector3.ZERO)
+		elif weapon.has_method("let_go"):
 			weapon.call("let_go")
 		weapon.queue_free()
 	weapon = null
