@@ -103,8 +103,8 @@ static func _albedo(key: String) -> ImageTexture:
 					c = Color(0.62, 0.60, 0.55) if mortar else base.lerp(Color(0.40, 0.18, 0.13), tone * 0.7)
 					c = c.lightened(v * 0.5)
 				"wood":
-					var grain := sin(x * 0.55 + noise.get_noise_2d(x * 0.1, y * 2.0) * 6.0) * 0.5 + 0.5
-					c = base.lerp(Color(0.28, 0.17, 0.09), grain * 0.55)
+					var grain := sin(x * 0.9 + noise.get_noise_2d(x * 0.05, y * 0.6) * 1.2) * 0.5 + 0.5
+					c = base.lerp(Color(0.30, 0.19, 0.10), grain * 0.3)
 					if x % 64 < 2:
 						c = c.darkened(0.45)
 					c = c.lightened(v * 0.3)

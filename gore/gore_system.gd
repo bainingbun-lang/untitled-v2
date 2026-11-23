@@ -680,8 +680,8 @@ static func shutdown() -> void:
 static func _get_blood_mesh() -> Mesh:
 	if _blood_mesh == null:
 		var mesh := CapsuleMesh.new()
-		mesh.radius = 0.011
-		mesh.height = 0.085
+		mesh.radius = 0.006
+		mesh.height = 0.05
 		mesh.radial_segments = 6
 		mesh.rings = 2
 		_blood_mesh = mesh
@@ -691,9 +691,10 @@ static func _get_blood_mesh() -> Mesh:
 static func _get_blood_material() -> Material:
 	if _blood_material == null:
 		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.5, 0.012, 0.012, 1.0)
-		material.roughness = 0.2
-		material.metallic_specular = 0.8
+		material.albedo_color = Color(0.28, 0.004, 0.006, 0.9)
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material.roughness = 0.45
+		material.metallic_specular = 0.4
 		_blood_material = material
 	return _blood_material
 
