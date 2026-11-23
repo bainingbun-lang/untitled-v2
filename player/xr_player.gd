@@ -34,6 +34,10 @@ func _ready() -> void:
 		c.button_pressed.connect(_on_button_pressed)
 	_build_holsters()
 	_fill_holsters.call_deferred()
+	var wm := WeaponMenu.new()
+	wm.name = "WeaponMenu"
+	add_child(wm)
+	wm.setup.call_deferred(self)
 
 
 func _physics_process(_delta: float) -> void:
