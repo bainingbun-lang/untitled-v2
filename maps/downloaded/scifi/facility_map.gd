@@ -5,6 +5,7 @@ extends Node3D
 ## con GLTFDocument desde bytes (funciona dentro del PCK) y se cachean; si una falla, se usa una caja.
 const NpcSpawner = preload("res://npc/npc_spawner.gd")
 const NpcReactions = preload("res://npc/npc_reactions.gd")
+const RemoteLog = preload("res://debug/remote_log.gd")
 const PACK := "res://assets/packs/scifi_pieces.zip"
 ## Las piezas viven en un ZIP (sin importar) y se descomprimen una vez en user:// al abrir el mapa.
 const PIECES := "user://scifi_pieces/"
@@ -42,13 +43,16 @@ var _cache := {}
 var _soft := {}
 var _mats := {}
 var _floors: Array = []
+var _loaded := 0
+var _fallback := 0
 
 
 func _ready() -> void:
 	var _vg := Node.new()
 	_vg.set_script(load("res://player/void_guard.gd"))
 	add_child(_vg)
-	ensure_pieces()
+	RemoteLog.crumb("FACILITY: ready start")
+	RemoteLog.crumb("FACILITY: ensure_pieces=%s" % ensure_pieces())
 	_setup_environment()
 	var rows: int = GRID.size()
 	var cols: int = (GRID[0] as String).length()
@@ -68,6 +72,8 @@ func _ready() -> void:
 	var player := get_node_or_null("XRPlayer") as Node3D
 	if player:
 		player.global_position = Vector3(2.0, 0.1, 3.5 * CELL)
+	var cam := get_node_or_null("XRPlayer/XRCamera3D") as Node3D
+	RemoteLog.crumb("FACILITY: piezas ok=%d caja=%d meshes=%d player=%s cam=%s luces=%d" % [_loaded, _fallback, _meshes(self).size(), str(player.global_position) if player else "null", str(cam.global_position) if cam else "null", find_children("*", "OmniLight3D", true, false).size()])
 	_spawn_npcs(cols, rows)
 
 
@@ -127,7 +133,11 @@ func _piece(name: String) -> Node3D:
 			var st := GLTFState.new()
 			if doc.append_from_buffer(bytes, PIECES, st) == OK:
 				n = doc.generate_scene(st) as Node3D
-		if n == null:
+		if n != null:
+			_loaded += 1
+		else:
+			_fallback += 1
+			RemoteLog.crumb("FACILITY: pieza fallida " + name)
 			push_warning("Instalacion: no carga la pieza " + name + "; se usa una caja")
 			var mi := MeshInstance3D.new()
 			var bm := BoxMesh.new()
