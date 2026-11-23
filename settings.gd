@@ -180,6 +180,30 @@ func apply_to_player(player: VRPlayer) -> void:
 
 
 func _ready() -> void:
+	if OS.has_feature("android"):
+		var t := Timer.new()
+		t.wait_time = 1.0
+		t.timeout.connect(_poll_remote_cmd)
+		add_child(t)
+		t.start()
 	# Sonido apagado en builds de depuración y pruebas; se oye en release. UNTITLED_MUTE=1 fuerza silencio.
 	if OS.is_debug_build() or OS.get_environment("UNTITLED_MUTE") == "1":
 		AudioServer.set_bus_mute(0, true)
+
+
+## Depuración remota por adb: escribe `scene res://...` o `quit` en Descargas/Untitled/cmd.txt; se ejecuta y se borra.
+func _poll_remote_cmd() -> void:
+	var path := AppPaths.root() + "/cmd.txt"
+	if not FileAccess.file_exists(path):
+		return
+	var line := FileAccess.get_file_as_string(path).strip_edges()
+	DirAccess.remove_absolute(path)
+	var parts := line.split(" ", false)
+	if parts.is_empty():
+		return
+	print("CMD remoto: ", line)
+	match parts[0]:
+		"scene":
+			get_tree().change_scene_to_file(parts[1])
+		"quit":
+			get_tree().quit()
