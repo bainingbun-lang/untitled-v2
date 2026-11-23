@@ -2,6 +2,7 @@ extends Node3D
 
 ## Mapa jugable con la casa descargada (CC0, ver CREDITS.md). Colisión por malla del modelo,
 ## piso y hasta 7 NPC. El jugador y la luz vienen de house_map.tscn.
+const HouseBuilder = preload("res://maps/house_builder.gd")
 const NpcSpawner = preload("res://npc/npc_spawner.gd")
 const NpcReactions = preload("res://npc/npc_reactions.gd")
 const MAX_NPCS := 7
@@ -10,7 +11,13 @@ const MAX_NPCS := 7
 func _ready() -> void:
 	var house := _load_glb(model_path())
 	if house == null:
-		push_warning("Mapa: no se pudo cargar " + model_path())
+		# Respaldo: si el modelo no carga (por ejemplo no se empaquetó), se arma la casa procedural
+		# para que el mapa siempre tenga piso, paredes y NPC en vez de quedar vacío.
+		push_warning("Mapa: no se pudo cargar " + model_path() + "; se usa la casa procedural")
+		HouseBuilder.build_two_story_house(Vector3.ZERO, self)
+		_model = get_node_or_null("HouseTwoStory") as Node3D
+		_add_ground()
+		_spawn_npcs()
 		return
 	add_child(house)
 	_model = house
@@ -84,7 +91,7 @@ func _spawn_npcs() -> void:
 	var total := NpcSpawner.count_for_area(area)
 	var space := get_world_3d().direct_space_state
 	var points := NpcSpawner.floor_points(space, fp[0], fp[1], total, [])
-	var eye := get_node_or_null("VRPlayer/CharacterBody3D/Origin/Camera") as Node3D
+	var eye := get_node_or_null("XRPlayer/XRCamera3D") as Node3D
 	var spec := npc_spec(points.size())
 	var made: Array = NpcSpawner.spawn(self, spec, points, eye)
 	var rx := NpcReactions.new()
