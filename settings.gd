@@ -193,8 +193,12 @@ func _ready() -> void:
 
 ## Depuración remota por adb: escribe `scene res://...` o `quit` en Descargas/Untitled/cmd.txt; se ejecuta y se borra.
 func _poll_remote_cmd() -> void:
-	var path := AppPaths.root() + "/cmd.txt"
-	if not FileAccess.file_exists(path):
+	var path := ""
+	for dir in [AppPaths.ANDROID_ROOT, "user://"]:
+		if FileAccess.file_exists(dir + "/cmd.txt"):
+			path = dir + "/cmd.txt"
+			break
+	if path == "":
 		return
 	var line := FileAccess.get_file_as_string(path).strip_edges()
 	DirAccess.remove_absolute(path)
