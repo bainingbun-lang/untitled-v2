@@ -171,7 +171,7 @@ func _run() -> void:
 	body.add_child(shape)
 	root.add_child(body)
 	var spray = GoreScript.blood_spray(body, Vector3(0.15, 0, 0), Vector3.RIGHT)
-	_expect(spray is GPUParticles3D and spray.lifetime == 0.4 and spray.one_shot, "blood_spray GPUParticles3D 0.4s")
+	_expect(spray is GPUParticles3D and is_equal_approx(spray.lifetime, 0.55) and spray.one_shot, "blood_spray GPUParticles3D 0.55s")
 	await physics_frame
 	await physics_frame
 	var exit_w: Dictionary = BulletImpact._try_exit_wound(body, Vector3(0.15, 0, 0), Vector3.RIGHT)

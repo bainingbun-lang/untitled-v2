@@ -173,17 +173,17 @@ static func blood_spray(parent: Node, point: Vector3, normal: Vector3) -> GPUPar
 	var dir := normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
 	var process := ParticleProcessMaterial.new()
 	process.direction = dir
-	process.spread = 22.0
-	process.initial_velocity_min = 2.5
+	process.spread = 28.0
+	process.initial_velocity_min = 2.0
 	process.initial_velocity_max = 5.5
 	process.gravity = Vector3(0.0, -9.8, 0.0)
-	process.scale_min = 0.6
-	process.scale_max = 1.3
+	process.scale_min = 0.4
+	process.scale_max = 2.0
 	process.particle_flag_align_y = true
 	var particles := GPUParticles3D.new()
 	particles.name = "BloodSpray"
-	particles.amount = 22 if is_extreme() else 14
-	particles.lifetime = 0.4
+	particles.amount = 56 if is_extreme() else 36
+	particles.lifetime = 0.55
 	particles.one_shot = true
 	particles.explosiveness = 0.9
 	particles.process_material = process
@@ -679,11 +679,11 @@ static func shutdown() -> void:
 
 static func _get_blood_mesh() -> Mesh:
 	if _blood_mesh == null:
-		var mesh := CapsuleMesh.new()
-		mesh.radius = 0.006
-		mesh.height = 0.05
-		mesh.radial_segments = 6
-		mesh.rings = 2
+		var mesh := SphereMesh.new()
+		mesh.radius = 0.007
+		mesh.height = 0.034
+		mesh.radial_segments = 8
+		mesh.rings = 4
 		_blood_mesh = mesh
 	return _blood_mesh
 
@@ -691,10 +691,9 @@ static func _get_blood_mesh() -> Mesh:
 static func _get_blood_material() -> Material:
 	if _blood_material == null:
 		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.28, 0.004, 0.006, 0.9)
-		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		material.roughness = 0.45
-		material.metallic_specular = 0.4
+		material.albedo_color = Color(0.4, 0.008, 0.012, 1.0)
+		material.roughness = 0.4
+		material.metallic_specular = 0.3
 		_blood_material = material
 	return _blood_material
 
