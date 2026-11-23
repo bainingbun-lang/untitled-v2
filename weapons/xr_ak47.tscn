@@ -65,13 +65,19 @@ shadow_mesh = SubResource("ArrayMesh_m7u5l")
 [sub_resource type="BoxShape3D" id="BoxShape3D_73bva"]
 size = Vector3(0.022601897, 0.15097627, 0.11981785)
 
-[sub_resource type="BoxMesh" id="BoxMesh_esm0r"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_esm0r"]
+albedo_color = Color(0.1, 0.11, 0.12, 1)
+metallic = 0.7
+roughness = 0.45
+
+[sub_resource type="BoxMesh" id="BoxMesh_e4gvx"]
+material = SubResource("StandardMaterial3D_esm0r")
 size = Vector3(0.05, 0.015, 0.01)
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_e4gvx"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_5lpjy"]
 radius = 0.035
 
-[node name="XR_ak47" type="RigidBody3D" unique_id=1527687793]
+[node name="XR_ak47" type="RigidBody3D" unique_id=248475603]
 collision_layer = 4
 collision_mask = 196615
 script = ExtResource("1_eer1c")
@@ -85,85 +91,85 @@ recoil_up_deg = 3.0
 model_magazine = NodePath("Model/Mesh/ak47/akmagazine_low")
 second_hand_grab = 2
 
-[node name="Model" type="Node3D" parent="." unique_id=1649402461]
+[node name="Model" type="Node3D" parent="." unique_id=1823920530]
 
 [node name="Mesh" type="Node3D" parent="Model" unique_id=63620865 instance=ExtResource("3_8gwtm")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=2002198603]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1098358365]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.313226e-09, -0.043457612, -0.10526857)
 shape = SubResource("BoxShape3D_2mwur")
 
-[node name="GripR" type="Marker3D" parent="." unique_id=1900441589 instance=ExtResource("4_eulvt")]
+[node name="GripR" type="Marker3D" parent="." unique_id=810953256 instance=ExtResource("4_eulvt")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0.04)
 visible = false
 script = ExtResource("5_j6nu7")
 handle = "Grip"
 hand = 1
 
-[node name="GripL" type="Marker3D" parent="." unique_id=1728064522 instance=ExtResource("6_bxnhp")]
+[node name="GripL" type="Marker3D" parent="." unique_id=1488838775 instance=ExtResource("6_bxnhp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0.04)
 visible = false
 script = ExtResource("5_j6nu7")
 handle = "Grip"
 
-[node name="Support0L" type="Marker3D" parent="." unique_id=1700586729 instance=ExtResource("6_bxnhp")]
+[node name="Support0L" type="Marker3D" parent="." unique_id=1633740238 instance=ExtResource("6_bxnhp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, -0.22)
 visible = false
 script = ExtResource("5_j6nu7")
 
-[node name="Support0R" type="Marker3D" parent="." unique_id=2067456441 instance=ExtResource("4_eulvt")]
+[node name="Support0R" type="Marker3D" parent="." unique_id=1830227262 instance=ExtResource("4_eulvt")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, -0.22)
 visible = false
 script = ExtResource("5_j6nu7")
 hand = 1
 
-[node name="Support1L" type="Marker3D" parent="." unique_id=1375954695 instance=ExtResource("6_bxnhp")]
+[node name="Support1L" type="Marker3D" parent="." unique_id=1103458805 instance=ExtResource("6_bxnhp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.2)
 visible = false
 script = ExtResource("5_j6nu7")
 
-[node name="Support1R" type="Marker3D" parent="." unique_id=805310208 instance=ExtResource("4_eulvt")]
+[node name="Support1R" type="Marker3D" parent="." unique_id=1413509423 instance=ExtResource("4_eulvt")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0.2)
 visible = false
 script = ExtResource("5_j6nu7")
 hand = 1
 
-[node name="TriggerMesh" type="MeshInstance3D" parent="." unique_id=14351826]
+[node name="TriggerMesh" type="MeshInstance3D" parent="." unique_id=1543973545]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.015, 0)
 
-[node name="FirearmTrigger" type="Node" parent="." unique_id=717619640 node_paths=PackedStringArray("mesh_trigger")]
+[node name="FirearmTrigger" type="Node" parent="." unique_id=329790982 node_paths=PackedStringArray("mesh_trigger")]
 script = ExtResource("7_iyasd")
 mesh_trigger = NodePath("../TriggerMesh")
 value = 0.3
 
-[node name="Muzzle" type="Marker3D" parent="." unique_id=1550049166]
+[node name="Muzzle" type="Marker3D" parent="." unique_id=651618344]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.4867809)
 
-[node name="Magazine" type="RigidBody3D" parent="." unique_id=928443382 groups=["mag_ak47"]]
+[node name="Magazine" type="RigidBody3D" parent="." unique_id=1486419940 groups=["mag_ak47"]]
 top_level = true
 collision_layer = 4
 collision_mask = 196615
 script = ExtResource("8_xwvkw")
 rounds = 30
 
-[node name="Mesh" type="MeshInstance3D" parent="Magazine" unique_id=399296191]
+[node name="Mesh" type="MeshInstance3D" parent="Magazine" unique_id=1235526603]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5.5879354e-09, 0.0807706, 0.12487407)
 mesh = SubResource("ArrayMesh_op8q3")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Magazine" unique_id=855388031]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Magazine" unique_id=964964813]
 shape = SubResource("BoxShape3D_73bva")
 
-[node name="GrabL" type="Marker3D" parent="Magazine" unique_id=1977955466 instance=ExtResource("6_bxnhp")]
+[node name="GrabL" type="Marker3D" parent="Magazine" unique_id=634160447 instance=ExtResource("6_bxnhp")]
 visible = false
 script = ExtResource("5_j6nu7")
 
-[node name="GrabR" type="Marker3D" parent="Magazine" unique_id=2015022039 instance=ExtResource("4_eulvt")]
+[node name="GrabR" type="Marker3D" parent="Magazine" unique_id=1906503467 instance=ExtResource("4_eulvt")]
 visible = false
 script = ExtResource("5_j6nu7")
 hand = 1
 
-[node name="MagazineWell" type="Area3D" parent="." unique_id=1950815835 instance=ExtResource("11_tbb5n")]
+[node name="MagazineWell" type="Area3D" parent="." unique_id=597833468 instance=ExtResource("11_tbb5n")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5879354e-09, -0.0807706, -0.12487407)
 collision_layer = 4
 collision_mask = 65540
@@ -172,26 +178,26 @@ grab_distance = 0.06
 snap_require = "mag_ak47"
 initial_object = NodePath("../Magazine")
 
-[node name="SlideOrigin" type="Node3D" parent="." unique_id=13759763]
+[node name="SlideOrigin" type="Node3D" parent="." unique_id=932159079]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 0.015, 0.02, -0.05)
 script = ExtResource("13_lh7eg")
 limit_maximum = 0.07
 
-[node name="Slide" type="Node3D" parent="SlideOrigin" unique_id=868794159]
+[node name="Slide" type="Node3D" parent="SlideOrigin" unique_id=2047300255]
 script = ExtResource("14_v1lmd")
 default_on_release = true
 
-[node name="SlideMesh" type="MeshInstance3D" parent="SlideOrigin/Slide" unique_id=562244310]
-mesh = SubResource("BoxMesh_esm0r")
+[node name="SlideMesh" type="MeshInstance3D" parent="SlideOrigin/Slide" unique_id=779720429]
+mesh = SubResource("BoxMesh_e4gvx")
 
-[node name="HandleOrigin" type="Node3D" parent="SlideOrigin/Slide" unique_id=937128959]
+[node name="HandleOrigin" type="Node3D" parent="SlideOrigin/Slide" unique_id=944985472]
 
-[node name="InteractableHandle" type="RigidBody3D" parent="SlideOrigin/Slide/HandleOrigin" unique_id=2082409717 instance=ExtResource("15_xqpoc")]
+[node name="InteractableHandle" type="RigidBody3D" parent="SlideOrigin/Slide/HandleOrigin" unique_id=705102607 instance=ExtResource("15_xqpoc")]
 collision_layer = 262144
 collision_mask = 0
 gravity_scale = 0.0
 script = ExtResource("16_e5h6w")
 picked_up_layer = 0
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="SlideOrigin/Slide/HandleOrigin/InteractableHandle" unique_id=1096828816]
-shape = SubResource("SphereShape3D_e4gvx")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SlideOrigin/Slide/HandleOrigin/InteractableHandle" unique_id=1835496523]
+shape = SubResource("SphereShape3D_5lpjy")

@@ -42,6 +42,8 @@ func _ready() -> void:
 	reload = WeaponReload.new(magazine_size)
 	_model = get_node_or_null("Model")
 	if _model:
+		_paint_bare(_model)
+	if _model:
 		_model_rest = _model.transform
 	if not model_magazine.is_empty():
 		get_node(model_magazine).visible = false
@@ -178,3 +180,33 @@ func _play(stream: AudioStream) -> void:
 ## Compatibilidad con el inventario/arsenal (piden action()): dispara.
 func action() -> void:
 	try_fire()
+
+
+## Mallas importadas sin textura salen blancas: acero oscuro mate.
+static var _steel: StandardMaterial3D
+
+
+func _paint_bare(root: Node) -> void:
+	if _steel == null:
+		_steel = StandardMaterial3D.new()
+		_steel.albedo_color = Color(0.13, 0.14, 0.16)
+		_steel.metallic = 0.75
+		_steel.roughness = 0.42
+	for m: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		if m.mesh == null:
+			continue
+		for i in m.mesh.get_surface_count():
+			var mat := m.mesh.surface_get_material(i) as BaseMaterial3D
+			if mat != null and mat.albedo_texture == null and mat.albedo_color.v > 0.9:
+				m.set_surface_override_material(i, _wood() if m.name == &"Stock" else _steel)
+
+
+static var _wood_mat: StandardMaterial3D
+
+
+static func _wood() -> StandardMaterial3D:
+	if _wood_mat == null:
+		_wood_mat = StandardMaterial3D.new()
+		_wood_mat.albedo_color = Color(0.36, 0.2, 0.1)
+		_wood_mat.roughness = 0.6
+	return _wood_mat

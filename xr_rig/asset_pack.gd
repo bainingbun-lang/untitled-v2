@@ -52,6 +52,23 @@ static func get_hand_material() -> ORMMaterial3D:
 		var m := ORMMaterial3D.new()
 		m.albedo_texture = albedo
 		m.orm_texture = load_texture(HANDS_ZIP, "hands_occlusionRoughnessMetallic.png")
+		m.roughness = 0.65
+		m.specular_mode = BaseMaterial3D.SPECULAR_SCHLICK_GGX
+		m.metallic_specular = 0.35
+		m.subsurf_scatter_enabled = true
+		m.subsurf_scatter_strength = 0.6
+		m.rim_enabled = true
+		m.rim = 0.2
+		m.rim_tint = 0.9
+		m.normal_enabled = true
+		var n := NoiseTexture2D.new()
+		n.noise = FastNoiseLite.new()
+		n.noise.frequency = 0.08
+		n.as_normal_map = true
+		n.bump_strength = 1.5
+		m.normal_texture = n
+		m.normal_scale = 0.35
+		m.uv1_scale = Vector3(1, 1, 1)
 		_hand_material = m
 	return _hand_material
 

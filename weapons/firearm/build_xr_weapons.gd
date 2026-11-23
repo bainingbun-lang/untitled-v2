@@ -25,13 +25,13 @@ const WEAPONS := [
 		"slide": [Vector3(0.015, 0.02, -0.05), Vector3(0.01, 0.015, 0.05), 0.07],
 		"stats": {"damage": 35.0, "fire_interval": 0.1, "automatic": true, "magazine_size": 30, "recoil_back": 0.02, "recoil_up_deg": 3.0},
 		"sound": "res://weapons/ak47/ak47_shot.wav"},
-	{"id": "sniper", "model": "res://weapons/models/sniper_cc0/sniper_rifle.glb", "rot_y": 180.0, "scale": 1.0,
+	{"id": "sniper", "model": "res://weapons/models/sniper_cc0/sniper_rifle.glb", "rot_y": 0.0, "scale": 1.0,
 		"mag_mesh": "SniperRifle/Magazine", "grip": Vector3(0, -0.05, 0.06),
 		"support": [Vector3(0, -0.02, -0.2), Vector3(0, 0.0, 0.4)], "muzzle_y": -0.02,
 		"slide": [Vector3(0.03, 0.0, 0.03), Vector3(0.012, 0.012, 0.04), 0.08],
 		"stats": {"damage": 150.0, "fire_interval": 1.0, "magazine_size": 5, "max_range": 300.0, "recoil_back": 0.06, "recoil_up_deg": 8.0},
 		"sound": "res://weapons/ak47/ak47_shot.wav"},
-	{"id": "barrett", "model": "res://weapons/models/sniper_cc0/sniper_rifle.glb", "rot_y": 180.0, "scale": 1.2,
+	{"id": "barrett", "model": "res://weapons/models/sniper_cc0/sniper_rifle.glb", "rot_y": 0.0, "scale": 1.2,
 		"mag_mesh": "SniperRifle/Magazine", "grip": Vector3(0, -0.06, 0.07),
 		"support": [Vector3(0, -0.02, -0.24), Vector3(0, 0.0, 0.48)], "muzzle_y": -0.024,
 		"slide": [Vector3(0.036, 0.0, 0.036), Vector3(0.014, 0.014, 0.05), 0.1],
@@ -165,6 +165,7 @@ func _build(cfg: Dictionary) -> Node:
 	else:
 		var bm := BoxMesh.new()
 		bm.size = mag_box.size
+		bm.material = _dark()
 		mmi.mesh = bm
 	_add(mag, mmi, "Mesh")
 	var mcol := CollisionShape3D.new()
@@ -201,6 +202,7 @@ func _build(cfg: Dictionary) -> Node:
 	var smi := MeshInstance3D.new()
 	var sbm := BoxMesh.new()
 	sbm.size = Vector3(cfg.slide[1].z, cfg.slide[1].y, cfg.slide[1].x) # ejes girados
+	sbm.material = _dark()
 	smi.mesh = sbm
 	_add(slider, smi, "SlideMesh")
 	var horigin = _add(slider, Node3D.new(), "HandleOrigin")
@@ -228,3 +230,12 @@ func _xf_to(node: Node3D, ancestor: Node3D) -> Transform3D:
 		xf = (n as Node3D).transform * xf
 		n = n.get_parent()
 	return xf
+
+
+
+func _dark() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.1, 0.11, 0.12)
+	m.metallic = 0.7
+	m.roughness = 0.45
+	return m

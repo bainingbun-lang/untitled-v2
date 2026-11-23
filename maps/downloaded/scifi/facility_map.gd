@@ -150,7 +150,7 @@ func _tint(n: Node3D, color: Color) -> void:
 
 ## Las texturas del pack son muy metalicas y sin reflejos se ven negras: se baja el metal y se
 ## sube la rugosidad para que la luz de ambiente las ilumine.
-func _soften_metal(n: Node3D) -> void:
+func _soften_metal(n: Node3D, v := 0) -> void:
 	for mi in _meshes(n):
 		var inst := mi as MeshInstance3D
 		if inst.mesh == null:
@@ -168,14 +168,14 @@ func _soften_metal(n: Node3D) -> void:
 			inst.set_surface_override_material(i, _soft[key])
 
 
-func _put(name: String, pos: Vector3, yaw: float, color: Color, solid: bool, scl := Vector3.ONE) -> Node3D:
+func _put(name: String, pos: Vector3, yaw: float, color: Color, solid: bool, scl := Vector3.ONE, v := 0) -> Node3D:
 	var n := _piece(name)
 	n.position = pos
 	n.rotation.y = yaw
 	n.scale = scl
 	if color.a < 0.0:
 		_tint(n, color)  # solo si se pide un color explicito; por defecto se conservan las texturas
-	_soften_metal(n)
+	_soften_metal(n, v)
 	add_child(n)
 	if solid:
 		for mi in _meshes(n):
@@ -184,7 +184,10 @@ func _put(name: String, pos: Vector3, yaw: float, color: Color, solid: bool, scl
 
 
 func _place_floor(ch: String, c: Vector3) -> void:
-	_put(FLOOR_PIECE[ch], c, 0.0, TINT[ch], false)
+	var h := _h(c)
+	_put(FLOOR_PIECE[ch], c, 0.0, TINT[ch], false, Vector3.ONE, h)
+	if h % 7 == 0:
+		_put("Prop_Light_Floor", c + Vector3(1.6, 0.0, -1.7), PI / 2, TINT[ch], false)
 	_put("Platform_Simple", c + Vector3(0, WALL_H, 0), 0.0, Color(0.3, 0.33, 0.38), false)
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
@@ -198,6 +201,10 @@ func _place_floor(ch: String, c: Vector3) -> void:
 
 
 ## Lados: [dx, dz, nombre, giro]. La pieza de pared vive en su borde -x local y mira a +x.
+func _h(p: Vector3) -> int:
+	return int(absf(sin(p.x * 12.9898 + p.z * 78.233) * 43758.5453)) % 16
+
+
 func _place_walls(x: int, z: int, ch: String, c: Vector3) -> void:
 	for s in [[-1, 0, "O", 0.0], [1, 0, "E", PI], [0, -1, "N", -PI / 2], [0, 1, "S", PI / 2]]:
 		var nb := _at(x + s[0], z + s[1])
