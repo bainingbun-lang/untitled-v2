@@ -1,7 +1,7 @@
 [gd_scene format=4]
 
 [ext_resource type="Script" path="res://weapons/firearm/xr_firearm.gd" id="1_eer1c"]
-[ext_resource type="AudioStream" path="res://weapons/ak47/ak47_shot.wav" id="2_abxxf"]
+[ext_resource type="AudioStream" path="res://weapons/ak47/ak47_nuevo_shot.wav" id="2_abxxf"]
 [ext_resource type="PackedScene" path="res://weapons/ak47/ak47.glb" id="3_8gwtm"]
 [ext_resource type="PackedScene" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand_right.tscn" id="4_eulvt"]
 [ext_resource type="Script" path="res://addons/godot-xr-tools/objects/grab_points/grab_point_hand.gd" id="5_j6nu7"]

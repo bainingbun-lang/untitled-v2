@@ -6,7 +6,7 @@
 
 [ext_resource type="Script" path="res://weapons/recoil.gd" id="4_rc"]
 [ext_resource type="Script" path="res://weapons/weapon_handling.gd" id="5_wh"]
-[ext_resource type="AudioStream" path="res://weapons/ak47/ak47_shot.wav" id="6_shot"]
+[ext_resource type="AudioStream" path="res://weapons/ak47/ak47_nuevo_shot.wav" id="6_shot"]
 [ext_resource type="AudioStream" path="res://weapons/ak47/ak-reload.wav" id="7_rl"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_col"]

@@ -43,7 +43,7 @@ func _case_loaded(ak) -> void:
 	_expect(ak.reload.total_rounds() == 30, "AK cargado: 29 + 1 en recamara")
 	var shot := ak.get_node_or_null("ShotSound") as AudioStreamPlayer3D
 	_expect(shot != null and shot.stream != null, "ShotSound con stream")
-	_expect(shot.stream.resource_path == "res://weapons/ak47/ak47_shot.wav", "usa ak47_shot.wav")
+	_expect(shot.stream.resource_path == "res://weapons/ak47/ak47_nuevo_shot.wav", "usa ak47_nuevo_shot.wav")
 	var muzzle: Vector3 = ak.get_node("Pivot/Smoke_spawn_point").position
 	_expect(muzzle.z < -0.4, "boca del canon en -Z")
 

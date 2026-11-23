@@ -24,7 +24,7 @@ const WEAPONS := [
 		"support": [Vector3(0, -0.01, -0.22), Vector3(0, -0.02, 0.2)], "muzzle_y": 0.01,
 		"slide": [Vector3(0.015, 0.02, -0.05), Vector3(0.01, 0.015, 0.05), 0.07],
 		"stats": {"damage": 35.0, "fire_interval": 0.1, "automatic": true, "magazine_size": 30, "recoil_back": 0.02, "recoil_up_deg": 3.0},
-		"sound": "res://weapons/ak47/ak47_shot.wav"},
+		"sound": "res://weapons/ak47/ak47_nuevo_shot.wav"},
 	{"id": "sniper", "model": "res://weapons/models/sniper_cc0/sniper_rifle.glb", "rot_y": 0.0, "scale": 1.0,
 		"mag_mesh": "SniperRifle/Magazine", "grip": Vector3(0, -0.05, 0.06),
 		"support": [Vector3(0, -0.02, -0.2), Vector3(0, 0.0, 0.4)], "muzzle_y": -0.02,
