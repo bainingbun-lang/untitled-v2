@@ -30,6 +30,10 @@ func _ready() -> void:
 
 ## Carga un .glb en tiempo de ejecución (funciona aunque no esté importado, y dentro del PCK en Android).
 static func _load_glb(path: String) -> Node3D:
+	if ResourceLoader.exists(path):
+		var packed := load(path) as PackedScene
+		if packed != null:
+			return packed.instantiate() as Node3D
 	var bytes := FileAccess.get_file_as_bytes(path)
 	if bytes.is_empty():
 		return null

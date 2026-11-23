@@ -50,10 +50,14 @@ static func _make(key: String, seconds: float, fn: Callable) -> AudioStreamWAV:
 static func file(path: String) -> AudioStreamWAV:
 	if _cache.has(path):
 		return _cache[path]
-	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.is_empty():
-		return null
-	var wav := AudioStreamWAV.load_from_buffer(bytes)
+	var wav: AudioStreamWAV = null
+	if ResourceLoader.exists(path):
+		wav = load(path) as AudioStreamWAV
+	if wav == null:
+		var bytes := FileAccess.get_file_as_bytes(path)
+		if bytes.is_empty():
+			return null
+		wav = AudioStreamWAV.load_from_buffer(bytes)
 	_cache[path] = wav
 	return wav
 
