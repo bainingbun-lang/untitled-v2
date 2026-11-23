@@ -337,6 +337,28 @@ static func _world_parent(parent: Node) -> Node:
 ## Gota que cae en una superficie (la usa GoreSystem tras el trazado balístico).
 static func add_drop_decal(parent: Node, pos: Vector3, normal: Vector3, size: float, dir: Vector3 = Vector3.ZERO) -> void:
 	_add_surface_decal(parent, pos, normal, size, "splatter", dir, false)
+	if size > 0.2 and randf() < 0.55:
+		add_run(parent, pos, normal, size)
+
+
+## Churrete que resbala por una pared: el decal de rastro nace corto y se alarga hacia abajo (solo superficies verticales).
+static func add_run(parent: Node, pos: Vector3, normal: Vector3, size: float) -> void:
+	if absf(normal.y) > 0.35:
+		return
+	var w := size * 0.45
+	var decal := _add_surface_decal(parent, pos, normal, w, "trail", Vector3.DOWN, false)
+	if decal == null:
+		return
+	var n := normal.normalized()
+	var down := (Vector3.DOWN - n * Vector3.DOWN.dot(n)).normalized()
+	var start := decal.global_position
+	var length := randf_range(0.4, 0.9)
+	var tw := decal.create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_method(func(t: float) -> void:
+		if is_instance_valid(decal):
+			var z := lerpf(w, length, t)
+			decal.size = Vector3(w, 0.12, z)
+			decal.global_position = start + down * (z - w) * 0.5, 0.0, 1.0, randf_range(3.0, 5.0))
 
 
 static func create_trail(parent: Node, from_pos: Vector3, to_pos: Vector3) -> void:

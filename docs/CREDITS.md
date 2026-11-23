@@ -12,3 +12,7 @@ weapons/models/quaternius/*.glb (Pistol_1, Bullpup_2, Revolver_1) — https://qu
 - machete_swish: "Swishes Sound Pack" (swish-1) por artisticdude, https://opengameart.org/content/swishes-sound-pack
 - machete_hit: "8 Wet Squish Slurp Impacts" (impactsplat01) por Independent.nu, https://opengameart.org/content/8-wet-squish-slurp-impacts
 - machete_gore: "Fleshy Bone Break/Snap SFX" (Wet Break 9) por Zane Little Music, https://opengameart.org/content/fleshy-bone-breaksnap-sfx
+
+## Sangre
+- Manchas procedurales (gore/gore_textures.gd, `_blob`): idea del splat con radio deformado por ruido de Alenvei/GODOT4-Blood-splatter-Tutorial (MIT, Copyright (c) 2023 Alenvei), https://github.com/Alenvei/GODOT4-Blood-splatter-Tutorial. Codigo propio, no se copio el shader.
+- Churretes que resbalan por paredes (gore/wound_decals.gd, `add_run`): implementacion propia. No se uso codigo de repos sin licencia (Godot_Dismemberment, bloodstain).

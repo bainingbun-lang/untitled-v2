@@ -15,6 +15,11 @@ static var _orm: ImageTexture
 static func _ensure() -> void:
 	if _loaded:
 		return
+	_load_zip()
+	_add_procedural()
+
+
+static func _load_zip() -> void:
 	_loaded = true
 	var zr := ZIPReader.new()
 	if zr.open(ZIP_PATH) != OK:
@@ -106,3 +111,46 @@ static func _get_fallback() -> Texture2D:
 				img.set_pixel(x, y, Color(1, 1, 1, clampf((edge - sqrt(dx * dx + dy * dy)) / 0.08, 0.0, 1.0)))
 		_fallback = ImageTexture.create_from_image(img)
 	return _fallback
+
+
+static func _add_procedural() -> void:
+	for kind in ["splat", "drop"]:
+		if not _tex.has(kind):
+			_tex[kind] = []
+	for i in 5:
+		_tex["splat"].append(_blob(101 + i, 0.38, 1.0))
+	for i in 3:
+		_tex["drop"].append(_blob(201 + i, 0.2, 0.6))
+
+
+## Mancha organica: radio deformado por lobulos y ruido, mas gotas satelite (tecnica de Alenvei/GODOT4-Blood-splatter-Tutorial, MIT).
+static func _blob(seed_v: int, base: float, spiky: float) -> ImageTexture:
+	var s := 96
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_v
+	var noise := FastNoiseLite.new()
+	noise.seed = seed_v
+	var spikes: Array = []
+	for k in rng.randi_range(4, 8):
+		spikes.append([rng.randf_range(0.0, TAU), rng.randf_range(0.12, 0.4) * spiky, rng.randf_range(0.05, 0.12)])
+	var sats: Array = []
+	for k in rng.randi_range(5, 10):
+		var a := rng.randf_range(0.0, TAU)
+		var d := rng.randf_range(0.5, 0.85)
+		sats.append([cos(a) * d, sin(a) * d, rng.randf_range(0.025, 0.07)])
+	var img := Image.create(s, s, false, Image.FORMAT_RGBA8)
+	for y in s:
+		for x in s:
+			var dx := (x + 0.5) / s * 2.0 - 1.0
+			var dy := (y + 0.5) / s * 2.0 - 1.0
+			var ang := atan2(dy, dx)
+			var edge := base + noise.get_noise_2d(cos(ang) * 2.5, sin(ang) * 2.5) * 0.14 * spiky + noise.get_noise_2d(cos(ang) * 9.0 + 40.0, sin(ang) * 9.0) * 0.045 * spiky
+			for sp in spikes:
+				var da := absf(wrapf(ang - sp[0], -PI, PI))
+				edge += sp[1] * exp(-(da * da) / (sp[2] * sp[2]))
+			var a := clampf((edge - sqrt(dx * dx + dy * dy)) / 0.06, 0.0, 1.0)
+			for sat in sats:
+				a = maxf(a, clampf((sat[2] - Vector2(dx - sat[0], dy - sat[1]).length()) / 0.02, 0.0, 1.0))
+			img.set_pixel(x, y, Color(1, 1, 1, a))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
