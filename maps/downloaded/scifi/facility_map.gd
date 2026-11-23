@@ -87,12 +87,17 @@ static func ensure_pieces() -> bool:
 	if zr.open(PACK) != OK:
 		return false
 	var stamp := PIECES + ".stamp"
-	var size := str(FileAccess.get_file_as_bytes(PACK).size())
+	var size := str(FileAccess.get_file_as_bytes(PACK).size()) + "-v2"
 	if FileAccess.file_exists(stamp) and FileAccess.get_file_as_string(stamp) == size:
 		zr.close()
 		return true
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(PIECES))
+	for old in DirAccess.get_files_at(PIECES):
+		if old.ends_with(".import"):
+			DirAccess.remove_absolute(PIECES + old)
 	for f in zr.get_files():
+		if f.ends_with(".import"):
+			continue
 		var fa := FileAccess.open(PIECES + f.get_file(), FileAccess.WRITE)
 		if fa != null:
 			fa.store_buffer(zr.read_file(f))
