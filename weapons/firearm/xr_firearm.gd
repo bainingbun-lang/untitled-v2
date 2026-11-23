@@ -138,7 +138,7 @@ func _on_slide_moved(pos: float) -> void:
 		reload.rack_slide()
 
 
-## Con el arma en la mano, A/X o B/Y de esa mano expulsa el cargador (alternativa a sacarlo con la otra mano).
+## Con el arma en la mano, A/X de esa mano expulsa el cargador (B/Y queda libre para el menu de armas) (alternativa a sacarlo con la otra mano).
 func _bind_eject() -> void:
 	var c := get_picked_up_by_controller()
 	if _eject_ctrl == c:
@@ -151,7 +151,7 @@ func _bind_eject() -> void:
 
 
 func _on_eject_button(action: String) -> void:
-	if action == "ax_button" or action == "by_button":
+	if action == "ax_button":
 		var well := get_node_or_null("MagazineWell")
 		if well and well.has_snapped_object():
 			var mag: RigidBody3D = well.picked_up_object
