@@ -5,6 +5,7 @@
 class_name WoundDecals
 extends RefCounted
 
+const GoreTextures = preload("res://gore/gore_textures.gd")
 const GROUND_MASK := 1
 const GROUND_PROBE := 8.0
 const MAX_DECAL_AGE := 30.0
@@ -23,9 +24,6 @@ static var _surface_decals: Array = []
 static var _puddles: Array = []
 static var _trails: Array = []
 static var _decal_materials: Dictionary = {}
-static var _puddle_material = null
-static var _decal_texture = null
-static var _splat_texture = null
 static var _limb_trail_material = null
 
 static var _decal_limit: int = 96
@@ -190,7 +188,7 @@ static func _get_layer_color(layer: int) -> Color:
 
 
 static func create_wound(parent: Node, pos: Vector3, normal: Vector3, size: float, layers: int, zone: String = "", npc_id: int = -1, uv: Vector2 = Vector2(0.5, 0.5), depth: float = 0.5) -> Dictionary:
-	if parent == null or not parent.is_inside_tree() or _decal_limit <= 0:
+	if parent == null or not parent.is_inside_tree() or _decal_limit <= 0 or not (parent is Node3D):
 		return {}
 
 	if npc_id >= 0:
@@ -198,27 +196,26 @@ static func create_wound(parent: Node, pos: Vector3, normal: Vector3, size: floa
 
 	var wound := Node3D.new()
 	wound.name = "Wound_%s" % (zone if not zone.is_empty() else "generic")
+	var n := normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
+	parent.add_child(wound)
+	# El decal se proyecta sobre el cuerpo en el punto del impacto (su eje Y local = normal).
+	wound.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, n)), pos)
 
-	var surface := _raycast_ground(parent, pos + Vector3.UP * 0.3)
-	var impact_pos: Vector3 = surface.get("position", pos)
-	var impact_normal: Vector3 = surface.get("normal", normal)
-	if surface.is_empty() or impact_normal.y < 0.3:
-		impact_pos = pos
-		impact_normal = normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
-
-	var wound_rot := Quaternion(Vector3.UP, impact_normal)
 	var created_layers: Array = []
 	var layer_count := clampi(layers, 1, 4)
+	var variant := randi()
 	for i in range(layer_count):
-		var layer_decal := MeshInstance3D.new()
+		var layer_decal := Decal.new()
 		layer_decal.name = "WoundLayer_%d" % i
-		var plane := PlaneMesh.new()
-		var layer_size: float = clampf(size * (1.0 - float(i) * 0.18), 0.025, maxf(size, 0.025))
-		plane.size = Vector2(layer_size, layer_size)
-		layer_decal.mesh = plane
-		layer_decal.material_override = _get_decal_material_for_layer(i, layer_count, depth)
-		layer_decal.position = impact_normal * (0.004 + float(i) * 0.0015)
-		layer_decal.rotation = wound_rot.get_euler()
+		var layer_size: float = size * 3.4 if i == 0 else clampf(size * 1.3 * (1.0 - float(i) * 0.3), 0.03, size * 1.3)
+		layer_decal.texture_albedo = GoreTextures.get_texture("splat", variant) if i == 0 else GoreTextures.get_texture("pool", variant)
+		layer_decal.texture_orm = GoreTextures.orm_texture()
+		layer_decal.modulate = GoreTextures.blood_color(0.85) if i == 0 else layer_color(i, layer_count, depth)
+		layer_decal.size = Vector3(layer_size, 0.3, layer_size)
+		layer_decal.rotation.y = randf() * TAU
+		layer_decal.distance_fade_enabled = true
+		layer_decal.distance_fade_begin = 15.0
+		layer_decal.distance_fade_length = 5.0
 		wound.add_child(layer_decal)
 		created_layers.append({
 			"node": layer_decal,
@@ -226,10 +223,6 @@ static func create_wound(parent: Node, pos: Vector3, normal: Vector3, size: floa
 			"size": layer_size,
 			"age": 0.0,
 		})
-
-	parent.add_child(wound)
-	wound.global_position = impact_pos
-	wound.global_rotation = wound_rot.get_euler()
 
 	var wound_data := {
 		"root": wound,
@@ -289,33 +282,41 @@ static func create_splatter(parent: Node, pos: Vector3, direction: Vector3, spre
 			var hit_normal: Vector3 = hit.get("normal", Vector3.UP)
 			if hit_normal.length_squared() > 0.0001:
 				hit_normal = hit_normal.normalized()
-			_add_surface_decal(parent, hit_pos, hit_normal, clampf(0.08 + force * 0.0015, 0.08, 0.30), "splatter")
+			_add_surface_decal(parent, hit_pos, hit_normal, clampf(0.12 + force * 0.003, 0.12, 0.45), "splatter", droplet_dir)
 		else:
-			_add_surface_decal(parent, ray_to, Vector3.UP, clampf(0.06 + force * 0.0010, 0.06, 0.20), "splatter_air")
+			_add_surface_decal(parent, ray_to, Vector3.UP, clampf(0.10 + force * 0.002, 0.10, 0.30), "splatter_air", droplet_dir, true)
 
 
-static func _add_surface_decal(parent: Node, pos: Vector3, normal: Vector3, size: float, decal_type: String) -> void:
+## Decal real (proyectado) sobre una superficie. kind: splat|drop|trail. dir (opcional) orienta el eje largo de rastros/estallidos.
+## snap_to_floor: busca el piso real bajo pos (para puntos en el aire); con superficie ya conocida (pared) va en false.
+static func _add_surface_decal(parent: Node, pos: Vector3, normal: Vector3, size: float, decal_type: String, dir: Vector3 = Vector3.ZERO, snap_to_floor: bool = false) -> Decal:
 	if parent == null or not parent.is_inside_tree() or _decal_limit <= 0:
-		return
-	# Decal proyectado sobre la superficie real (no un plano flotante), con textura de salpicadura.
+		return null
+	var impact_pos := pos
+	var impact_normal := normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
+	if snap_to_floor:
+		var surface := _raycast_ground(parent, pos + Vector3.UP * 0.3)
+		if not surface.is_empty():
+			impact_pos = surface["position"]
+			impact_normal = surface["normal"]
+	var kind := "trail" if decal_type == "trail" else ("drop" if decal_type == "drip" or randf() < 0.45 else "splat")
 	var decal := Decal.new()
 	decal.name = "SurfaceDecal_%s" % decal_type
-	decal.texture_albedo = _get_splat_texture()
-	decal.modulate = Color(0.45, 0.02, 0.02, 0.9)
-	decal.size = Vector3(size, 0.3, size)
-
-	var surface := _raycast_ground(parent, pos + Vector3.UP * 0.3)
-	var impact_pos: Vector3 = surface.get("position", pos)
-	var impact_normal: Vector3 = surface.get("normal", normal)
-	if surface.is_empty() or impact_normal.y < 0.2:
-		impact_pos = pos
-		impact_normal = normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
-
-	parent.add_child(decal)
-	var basis := Basis(Quaternion(Vector3.UP, impact_normal.normalized()))
-	basis = basis * Basis(Vector3.UP, randf() * TAU)
-	decal.global_transform = Transform3D(basis, impact_pos + impact_normal * 0.05)
-
+	decal.texture_albedo = GoreTextures.get_texture(kind)
+	decal.texture_orm = GoreTextures.orm_texture()
+	decal.modulate = GoreTextures.blood_color(0.6)
+	decal.size = Vector3(size, 0.12, size)
+	decal.distance_fade_enabled = true
+	decal.distance_fade_begin = 15.0
+	decal.distance_fade_length = 5.0
+	_world_parent(parent).add_child(decal)
+	var basis := Basis(Quaternion(Vector3.UP, impact_normal))
+	var yaw := randf() * TAU
+	if dir.length_squared() > 0.0001:
+		var local_dir := basis.inverse() * dir.normalized()
+		if Vector2(local_dir.x, local_dir.z).length_squared() > 0.0001:
+			yaw = atan2(local_dir.x, local_dir.z) + (PI if randf() < 0.3 else 0.0)
+	decal.global_transform = Transform3D(basis * Basis(Vector3.UP, yaw), impact_pos + impact_normal * 0.03)
 	_surface_decals.append({
 		"root": decal,
 		"position": impact_pos,
@@ -324,6 +325,18 @@ static func _add_surface_decal(parent: Node, pos: Vector3, normal: Vector3, size
 		"type": decal_type,
 	})
 	_enforce_limits()
+	return decal
+
+
+## Nodo donde cuelgan los decals del mundo (escena actual, o la raíz): no siguen al NPC que cae.
+static func _world_parent(parent: Node) -> Node:
+	var tree := parent.get_tree()
+	return tree.current_scene if tree.current_scene != null else tree.root
+
+
+## Gota que cae en una superficie (la usa GoreSystem tras el trazado balístico).
+static func add_drop_decal(parent: Node, pos: Vector3, normal: Vector3, size: float, dir: Vector3 = Vector3.ZERO) -> void:
+	_add_surface_decal(parent, pos, normal, size, "splatter", dir, false)
 
 
 static func create_trail(parent: Node, from_pos: Vector3, to_pos: Vector3) -> void:
@@ -332,65 +345,100 @@ static func create_trail(parent: Node, from_pos: Vector3, to_pos: Vector3) -> vo
 	var distance := from_pos.distance_to(to_pos)
 	if distance < 0.1:
 		return
-	var steps := clampi(ceili(distance / 0.15), 1, 8)
+	var steps := clampi(ceili(distance / 0.4), 1, 3)
+	var dir := (to_pos - from_pos).normalized()
 	for i in range(steps):
 		var t := float(i + 1) / float(steps)
-		var pos := from_pos.lerp(to_pos, t)
-		var size: float = clampf(0.05 * (1.0 - t * 0.5), 0.02, 0.08)
-		_add_surface_decal(parent, pos, Vector3.UP, size, "trail")
+		var size: float = randf_range(0.28, 0.42) * (1.0 - t * 0.4)
+		_add_surface_decal(parent, from_pos.lerp(to_pos, t), Vector3.UP, size, "trail", Vector3(dir.x, 0.0, dir.z) if absf(dir.y) < 0.9 else Vector3.ZERO, true)
 
 
 static func create_puddle(parent: Node, pos: Vector3, normal: Vector3, initial_size: float) -> Node3D:
 	if parent == null or not parent.is_inside_tree() or _puddle_limit <= 0:
 		return null
 
-	var puddle := MeshInstance3D.new()
-	puddle.name = "BloodPuddle"
-	puddle.mesh = _make_irregular_disc(clampf(initial_size, 0.08, 0.5), 16)
-	puddle.material_override = _get_puddle_material()
-
-	var surface := _raycast_ground(parent, pos + Vector3.UP * 0.5)
+	# Piso real bajo pos (arranca sobre el pie del cuerpo, así sirve en cualquier altura de piso).
+	var top_y := pos.y
+	if parent is Node3D:
+		top_y = maxf(top_y, (parent as Node3D).global_position.y)
+	var surface := _raycast_ground(parent, Vector3(pos.x, top_y + 0.6, pos.z))
 	var impact_pos: Vector3 = surface.get("position", pos)
 	var impact_normal: Vector3 = surface.get("normal", normal)
 	if surface.is_empty() or impact_normal.y < 0.4:
 		impact_pos = pos
 		impact_normal = normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
 
-	parent.add_child(puddle)
-	puddle.global_position = impact_pos + impact_normal * 0.003
-	puddle.global_rotation = Quaternion(Vector3.UP, impact_normal).get_euler()
+	var puddle := Node3D.new()
+	puddle.name = "BloodPuddle"
+	_world_parent(parent).add_child(puddle)
+	puddle.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, impact_normal.normalized())), impact_pos)
 
-	_puddles.append({
+	var diameter := clampf(initial_size, 0.08, 0.6)
+	var layers: Array = []
+	for i in range(3 if _puddle_limit >= 24 else 2):
+		var d := Decal.new()
+		d.name = "PuddleLayer_%d" % i
+		d.texture_albedo = GoreTextures.get_texture("pool" if i < 2 else "drop")
+		d.texture_orm = GoreTextures.orm_texture()
+		d.modulate = GoreTextures.blood_color(0.45 - 0.15 * i)
+		d.rotation.y = randf() * TAU
+		d.position.y = 0.02
+		d.distance_fade_enabled = true
+		d.distance_fade_begin = 20.0
+		d.distance_fade_length = 5.0
+		puddle.add_child(d)
+		layers.append({"decal": d, "mult": [1.0, 0.62, 1.35][i]})
+
+	var entry := {
 		"node": puddle,
 		"position": impact_pos,
 		"normal": impact_normal,
-		"size": initial_size,
-		"max_size": initial_size * PUDDLE_MAX_SIZE_MULT,
+		"size": diameter,
+		"max_size": diameter * PUDDLE_MAX_SIZE_MULT,
 		"age": 0.0,
 		"growing": true,
-	})
+		"layers": layers,
+	}
+	_puddles.append(entry)
+	_apply_puddle_size(entry)
 	_enforce_limits()
 	return puddle
+
+
+static func _apply_puddle_size(entry: Dictionary) -> void:
+	var s: float = entry["size"]
+	(entry["node"] as Node3D).set_meta("diameter", s)
+	for l in entry["layers"]:
+		var d: Decal = l["decal"]
+		if is_instance_valid(d):
+			var w: float = s * l["mult"]
+			d.size = Vector3(w, 0.12, w)
+
+
+## Un charco que sigue sangrando: sube su tamaño máximo (diámetro, m) y vuelve a crecer.
+static func feed_puddle(node: Node3D, amount: float) -> void:
+	for entry in _puddles:
+		if entry.get("node", null) == node:
+			entry["max_size"] = minf(float(entry["max_size"]) + amount, 2.6)
+			entry["growing"] = true
+			return
 
 
 static func update_puddles(delta: float) -> void:
 	if delta <= 0.0 or _puddles.is_empty():
 		return
 	for puddle in _puddles:
-		var node = puddle.get("node", null)
-		if not is_instance_valid(node):
+		if not is_instance_valid(puddle.get("node", null)):
 			continue
 		puddle["age"] = float(puddle.get("age", 0.0)) + delta
-		var age: float = puddle["age"]
-		if bool(puddle.get("growing", false)) and age < 5.0:
-			var grow_factor: float = 1.0 + (age / 5.0) * (PUDDLE_MAX_SIZE_MULT - 1.0)
-			var base_size: float = maxf(float(puddle.get("size", 0.1)), 0.001)
-			var new_size: float = base_size * grow_factor
-			node.scale = Vector3(new_size / base_size, 1.0, new_size / base_size)
-		elif age >= 5.0:
-			puddle["growing"] = false
-		if age > MAX_DECAL_AGE * 1.5:
-			node.modulate = Color(1.0, 1.0, 1.0, maxf(0.0, 1.0 - (age - MAX_DECAL_AGE * 1.5) / 10.0))
+		if bool(puddle.get("growing", false)):
+			var s: float = puddle["size"]
+			var mx: float = puddle["max_size"]
+			s += (mx - s) * (1.0 - exp(-delta * 0.5))
+			puddle["size"] = s
+			if mx - s < 0.01:
+				puddle["growing"] = false
+			_apply_puddle_size(puddle)
 
 
 static func prune_invalid() -> void:
@@ -459,9 +507,12 @@ static func clear() -> void:
 static func shutdown() -> void:
 	clear()
 	_decal_materials.clear()
-	_puddle_material = null
-	_decal_texture = null
 	_limb_trail_material = null
+
+
+## Piso real bajo `from` (mismo raycast que usan charcos y rastros).
+static func floor_below(parent: Node, from: Vector3) -> Dictionary:
+	return _raycast_ground(parent, from)
 
 
 static func _raycast_ground(parent: Node, from: Vector3) -> Dictionary:
@@ -476,6 +527,8 @@ static func _raycast_ground(parent: Node, from: Vector3) -> Dictionary:
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
 	query.collision_mask = GROUND_MASK
+	if parent is CollisionObject3D:
+		query.exclude = [(parent as CollisionObject3D).get_rid()]
 	return world_3d.direct_space_state.intersect_ray(query)
 
 
@@ -506,11 +559,7 @@ static func _make_irregular_disc(radius: float, segments: int) -> Mesh:
 	return mesh
 
 
-static func _get_decal_material_for_layer(layer: int, total_layers: int, depth: float) -> Material:
-	var key := "wound_%d_%d_%d" % [layer, total_layers, int(depth * 10.0)]
-	if _decal_materials.has(key):
-		return _decal_materials[key]
-	var material := StandardMaterial3D.new()
+static func layer_color(layer: int, total_layers: int, depth: float) -> Color:
 	var layer_type: int
 	if depth < 0.33:
 		layer_type = DamageLayer.SKIN
@@ -518,89 +567,10 @@ static func _get_decal_material_for_layer(layer: int, total_layers: int, depth: 
 		layer_type = DamageLayer.MUSCLE
 	else:
 		layer_type = DamageLayer.BONE
-		# exposed bone: only the innermost layer is bone, outer rings stay muscle
+		# hueso expuesto: solo la capa más interna; los anillos externos siguen siendo músculo
 		if layer < total_layers - 1:
 			layer_type = DamageLayer.MUSCLE
-	material.albedo_color = _get_layer_color(layer_type)
-	material.albedo_texture = _get_decal_texture()
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.roughness = 0.95
-	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
-	_decal_materials[key] = material
-	return material
-
-
-static func _get_surface_decal_material(decal_type: String) -> Material:
-	var key := "surface_%s" % decal_type
-	if _decal_materials.has(key):
-		return _decal_materials[key]
-	var material := StandardMaterial3D.new()
-	match decal_type:
-		"splatter", "splatter_air":
-			material.albedo_color = Color(0.35, 0.01, 0.01, 0.75)
-		"trail":
-			material.albedo_color = Color(0.28, 0.008, 0.008, 0.65)
-		_:
-			material.albedo_color = Color(0.3, 0.01, 0.01, 0.7)
-	material.albedo_texture = (_get_splat_texture() if (decal_type.begins_with("splatter") or decal_type == "trail") else _get_decal_texture())
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.roughness = 1.0
-	material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
-	_decal_materials[key] = material
-	return material
-
-
-static func _get_puddle_material() -> Material:
-	if _puddle_material == null:
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.22, 0.005, 0.005, 0.85)
-		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		material.roughness = 0.15
-		material.metallic = 0.05
-		_puddle_material = material
-	return _puddle_material
-
-
-static func _get_decal_texture() -> Texture2D:
-	if _decal_texture == null:
-		var gradient := Gradient.new()
-		gradient.add_point(0.0, Color(1.0, 1.0, 1.0, 1.0))
-		gradient.add_point(0.5, Color(1.0, 1.0, 1.0, 0.65))
-		gradient.add_point(1.0, Color(1.0, 1.0, 1.0, 0.0))
-		var texture := GradientTexture2D.new()
-		texture.gradient = gradient
-		texture.fill = GradientTexture2D.FILL_RADIAL
-		texture.fill_from = Vector2(0.5, 0.5)
-		texture.fill_to = Vector2(1.0, 0.5)
-		texture.width = 64
-		texture.height = 64
-		_decal_texture = texture
-	return _decal_texture
-
-
-## Irregular blob with ragged edge and droplets, so splatters don't read as squares.
-static func _get_splat_texture() -> Texture2D:
-	if _splat_texture == null:
-		var size := 64
-		var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
-		var rng := RandomNumberGenerator.new()
-		rng.seed = 7741
-		var harmonics: Array = []
-		for k in 6:
-			harmonics.append([rng.randf_range(0.03, 0.09), float(k + 2), rng.randf_range(0.0, TAU)])
-		for y in size:
-			for x in size:
-				var dx := (x + 0.5) / size * 2.0 - 1.0
-				var dy := (y + 0.5) / size * 2.0 - 1.0
-				var r := sqrt(dx * dx + dy * dy)
-				var ang := atan2(dy, dx)
-				var edge := 0.5
-				for h in harmonics:
-					edge += h[0] * sin(h[1] * ang + h[2])
-				var a := clampf((edge - r) / 0.08, 0.0, 1.0)
-				img.set_pixel(x, y, Color(1.0, 1.0, 1.0, a))
-		_splat_texture = ImageTexture.create_from_image(img)
-	return _splat_texture
+	return _get_layer_color(layer_type)
 
 
 static func wound_count() -> int:

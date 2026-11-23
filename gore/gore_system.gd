@@ -6,6 +6,7 @@ class_name GoreSystem
 extends RefCounted
 
 const WoundDecalsScript = preload("res://gore/wound_decals.gd")
+const GoreDriverScript = preload("res://gore/gore_driver.gd")
 const MeshSlicerScript = preload("res://gore/mesh_slicer/mesh_slicer.gd")
 
 enum GoreLevel { OFF = 0, NORMAL = 1, EXTREME = 2 }
@@ -21,7 +22,7 @@ const MAX_ACTIVE_PARTICLES_EXTREME := 48
 const MAX_SCREEN_SPLATTERS := 4
 const MAX_DISTANCE_PARTICLE := 30.0
 const MAX_DISTANCE_PART := 35.0
-const STUMP_BLEED_TIME := 3.0
+const STUMP_BLEED_TIME := 6.0
 
 static var _part_pool: Array = []
 static var _active_particles: Array = []
@@ -33,6 +34,7 @@ static var _stump_cap_material = null
 static var _part_material = null
 static var _gore_level: int = GoreLevel.NORMAL
 static var _screen_root: Viewport = null
+static var _driver: Node = null
 
 
 static func initialize() -> void:
@@ -106,21 +108,78 @@ static func create_bullet_wound(parent: Node, pos: Vector3, normal: Vector3, is_
 	return WoundDecalsScript.create_wound(parent, pos, normal, size, depth_layers, zone, npc_id, uv, depth)
 
 
-## Short arterial-style spray at the impact point (0.3 s, few particles).
+static func _ensure_driver(node: Node) -> void:
+	if is_instance_valid(_driver) or node == null or not node.is_inside_tree():
+		return
+	_driver = GoreDriverScript.new()
+	_driver.name = "GoreDriver"
+	node.get_tree().root.add_child.call_deferred(_driver)
+
+
+## Gotas balísticas: cada una vuela con gravedad, se traza con raycast y deja un decal donde cae (piso o pared reales), con retraso = tiempo de vuelo.
+## Devuelve cuántas aterrizaron. Solo en el paso de física (raycast); fuera de él no hace nada.
+static func _land_drops(parent: Node, origin: Vector3, dir: Vector3, spread_deg: float, vmin: float, vmax: float, count: int, size_min: float, size_max: float) -> int:
+	if count <= 0 or not (parent is Node3D) or not Engine.is_in_physics_frame():
+		return 0
+	var world := (parent as Node3D).get_world_3d()
+	if world == null or world.direct_space_state == null:
+		return 0
+	var space := world.direct_space_state
+	var excl: Array[RID] = []
+	if parent is CollisionObject3D:
+		excl.append((parent as CollisionObject3D).get_rid())
+	var d := dir.normalized() if dir.length_squared() > 0.0001 else Vector3.UP
+	var ref := Vector3.UP if absf(d.dot(Vector3.UP)) < 0.95 else Vector3.FORWARD
+	var right := d.cross(ref).normalized()
+	var up := right.cross(d).normalized()
+	var g := Vector3(0.0, -9.8, 0.0)
+	var tree := parent.get_tree()
+	var landed := 0
+	for i in range(count):
+		var a := randf() * TAU
+		var r := tan(deg_to_rad(spread_deg)) * sqrt(randf())
+		var v := (d + (right * cos(a) + up * sin(a)) * r).normalized() * randf_range(vmin, vmax)
+		var prev := origin
+		var t := 0.0
+		for step in range(14):
+			var nt := t + 0.07
+			var next := origin + v * nt + g * (0.5 * nt * nt)
+			var query := PhysicsRayQueryParameters3D.create(prev, next)
+			query.collision_mask = 3
+			query.exclude = excl
+			var hit := space.intersect_ray(query)
+			if not hit.is_empty():
+				var hp: Vector3 = hit["position"]
+				var hn: Vector3 = hit["normal"]
+				var vel := v + g * (t + 0.035)
+				var sz := randf_range(size_min, size_max)
+				tree.create_timer(t + 0.035).timeout.connect(func() -> void:
+					if is_instance_valid(parent) and parent.is_inside_tree():
+						WoundDecalsScript.add_drop_decal(parent, hp, hn, sz, vel))
+				landed += 1
+				break
+			prev = next
+			t = nt
+	return landed
+
+
+## Chorro de impacto: gotas alargadas por la velocidad (0.4 s) + manchas reales donde aterrizan.
 static func blood_spray(parent: Node, point: Vector3, normal: Vector3) -> GPUParticles3D:
 	if not gore_enabled() or parent == null or not parent.is_inside_tree():
 		return null
 	if WoundDecalsScript.get_active_particle_limit() <= 0:
 		return null
+	_ensure_driver(parent)
 	var dir := normal.normalized() if normal.length_squared() > 0.0001 else Vector3.UP
 	var process := ParticleProcessMaterial.new()
 	process.direction = dir
-	process.spread = 20.0
+	process.spread = 22.0
 	process.initial_velocity_min = 2.5
-	process.initial_velocity_max = 5.0
+	process.initial_velocity_max = 5.5
 	process.gravity = Vector3(0.0, -9.8, 0.0)
-	process.scale_min = 0.5
-	process.scale_max = 1.0
+	process.scale_min = 0.6
+	process.scale_max = 1.3
+	process.particle_flag_align_y = true
 	var particles := GPUParticles3D.new()
 	particles.name = "BloodSpray"
 	particles.amount = 22 if is_extreme() else 14
@@ -136,40 +195,58 @@ static func blood_spray(parent: Node, point: Vector3, normal: Vector3) -> GPUPar
 	particles.emitting = true
 	_active_particles.append(particles)
 	_enforce_active_particle_limit()
+	_land_drops(parent, point, dir, 24.0, 2.5, 5.5, 8 if is_extreme() else 5, 0.2, 0.5)
 	return particles
 
 
-## Thin stream of droplets falling from a fresh wound for ~2 s (shortcut: no floor splat, drops just fall and vanish).
+## Goteo de ~3 s desde una herida: gotas alargadas, cada una mancha el piso REAL (raycast hacia abajo) y alimentan un charco creciente.
 static func blood_drip(parent: Node, point: Vector3) -> GPUParticles3D:
 	if not gore_enabled() or parent == null or not parent.is_inside_tree():
 		return null
 	if WoundDecalsScript.get_active_particle_limit() <= 0:
 		return null
+	_ensure_driver(parent)
 	var process := ParticleProcessMaterial.new()
 	process.direction = Vector3.DOWN
 	process.spread = 8.0
 	process.initial_velocity_min = 0.2
 	process.initial_velocity_max = 0.6
 	process.gravity = Vector3(0.0, -9.8, 0.0)
-	process.scale_min = 0.5
-	process.scale_max = 0.9
+	process.scale_min = 0.6
+	process.scale_max = 1.0
+	process.particle_flag_align_y = true
 	var particles := GPUParticles3D.new()
 	particles.name = "BloodDrip"
 	particles.amount = 8
 	particles.lifetime = 1.0
-	particles.one_shot = true
+	particles.one_shot = false
 	particles.process_material = process
 	particles.draw_pass_1 = _get_blood_mesh()
 	particles.material_override = _get_blood_material()
 	parent.add_child(particles)
 	particles.global_position = point
 	particles.emitting = true
-	parent.get_tree().create_timer(2.5).timeout.connect(particles.queue_free)
-	# Shortcut: el charco cae a una altura fija de piso de la casa (0.53 m), no por raycast; subir si hay otros pisos.
-	var floor_pos := Vector3(point.x, 0.53, point.z)
-	parent.get_tree().create_timer(0.9).timeout.connect(func() -> void:
-		if is_instance_valid(parent) and parent.is_inside_tree():
-			create_puddle(parent, floor_pos, Vector3.UP, 0.22))
+	var tree := parent.get_tree()
+	tree.create_timer(3.0).timeout.connect(func() -> void:
+		if is_instance_valid(particles):
+			particles.emitting = false)
+	tree.create_timer(4.5).timeout.connect(particles.queue_free)
+	var floor_hit := WoundDecalsScript.floor_below(parent, point)
+	if not floor_hit.is_empty():
+		var fp: Vector3 = floor_hit["position"]
+		var fn: Vector3 = floor_hit["normal"]
+		var fall := sqrt(2.0 * maxf(point.y - fp.y, 0.05) / 9.8)
+		var holder: Array = []
+		for k in range(5):
+			tree.create_timer(fall + 0.2 + k * 0.6).timeout.connect(func() -> void:
+				if not (is_instance_valid(parent) and parent.is_inside_tree()) or not gore_enabled():
+					return
+				var pos := fp + Vector3(randf_range(-0.03, 0.03), 0.0, randf_range(-0.03, 0.03))
+				WoundDecalsScript.add_drop_decal(parent, pos, fn, randf_range(0.14, 0.26))
+				if holder.is_empty():
+					holder.append(create_puddle(parent, fp, fn, 0.22))
+				elif is_instance_valid(holder[0]):
+					WoundDecalsScript.feed_puddle(holder[0], 0.08))
 	_active_particles.append(particles)
 	_enforce_active_particle_limit()
 	return particles
@@ -221,7 +298,10 @@ static func dismember_limb(parent: Node, bone_idx: int, skeleton: Skeleton3D, hi
 				"timer": STUMP_BLEED_TIME,
 				"position": bone_pos,
 				"normal": -safe_normal,
+				"age": 0.0,
+				"tick": 0.0,
 			})
+			blood_spray(parent, bone_pos, -safe_normal + Vector3.UP)
 
 	# Idea from Dismemberment_Tutorial_Godot4.2 scripts/dismemberment.gd:_remove_bone (MIT, Alenvei): scale the bone ~0 so the skinned limb (and its children) vanish.
 	# shortcut: an AnimationPlayer that keys scale overwrites this; move to a SkeletonModifier3D when NPCs get animated skeletons.
@@ -379,23 +459,27 @@ static func _create_stump_bleed(parent: Node, pos: Vector3, normal: Vector3) -> 
 		return null
 	if WoundDecalsScript.get_active_particle_limit() <= 0:
 		return null
+	_ensure_driver(parent)
 	var anchor := Node3D.new()
 	anchor.name = "StumpBleed"
 	parent.add_child(anchor)
 	anchor.global_position = pos
 
+	# Chorro arterial: sale por el corte y se curva por la gravedad (alargado según su velocidad).
 	var particles := CPUParticles3D.new()
+	particles.name = "Jet"
 	particles.amount = 40
 	particles.lifetime = 0.9
 	particles.one_shot = false
 	particles.emitting = true
-	particles.direction = normal
-	particles.spread = 15.0
-	particles.initial_velocity_min = 0.8
-	particles.initial_velocity_max = 2.5
-	particles.gravity = Vector3(0.0, -6.0, 0.0)
+	particles.direction = (normal.normalized() + Vector3.UP * 0.9).normalized()
+	particles.spread = 12.0
+	particles.initial_velocity_min = 1.6
+	particles.initial_velocity_max = 3.4
+	particles.gravity = Vector3(0.0, -7.0, 0.0)
 	particles.scale_amount_min = 0.8
-	particles.scale_amount_max = 1.6
+	particles.scale_amount_max = 1.5
+	particles.particle_flag_align_y = true
 	particles.mesh = _get_blood_mesh()
 	particles.material_override = _get_blood_material()
 	anchor.add_child(particles)
@@ -502,8 +586,28 @@ static func _update_stump_bleeds(delta: float) -> void:
 		if bleed["timer"] <= 0.0:
 			node.queue_free()
 			_stump_bleeds.remove_at(i)
-		else:
-			i += 1
+			continue
+		# k: 1 recién cortado -> 0 apagado. El chorro pulsa con el "latido" y se debilita.
+		var k: float = clampf(float(bleed["timer"]) / STUMP_BLEED_TIME, 0.0, 1.0)
+		bleed["age"] = float(bleed.get("age", 0.0)) + delta
+		var jet := (node as Node).get_node_or_null("Jet") as CPUParticles3D
+		if jet != null:
+			jet.emitting = k > 0.12
+			jet.initial_velocity_max = lerpf(0.8, 3.4, k) * (0.8 + 0.2 * sin(float(bleed["age"]) * 9.0))
+		bleed["tick"] = float(bleed.get("tick", 0.0)) - delta
+		if bleed["tick"] <= 0.0 and k > 0.1:
+			bleed["tick"] = 0.35
+			var pos: Vector3 = (node as Node3D).global_position
+			var dir: Vector3 = Vector3(bleed["normal"]) + Vector3.UP * 0.9
+			_land_drops(node, pos, dir, 14.0, 1.4, 3.2 * (0.5 + 0.5 * k), 1, 0.16, 0.34)
+			var pud = bleed.get("puddle", null)
+			if not is_instance_valid(pud):
+				var fh := WoundDecalsScript.floor_below(node, pos)
+				if not fh.is_empty():
+					bleed["puddle"] = create_puddle(node, fh["position"], fh["normal"], 0.16)
+			else:
+				WoundDecalsScript.feed_puddle(pud, 0.07 * k + 0.02)
+		i += 1
 
 
 static func _cleanup_distant() -> void:
@@ -575,11 +679,11 @@ static func shutdown() -> void:
 
 static func _get_blood_mesh() -> Mesh:
 	if _blood_mesh == null:
-		var mesh := SphereMesh.new()
-		mesh.radius = 0.035
-		mesh.height = 0.07
+		var mesh := CapsuleMesh.new()
+		mesh.radius = 0.011
+		mesh.height = 0.085
 		mesh.radial_segments = 6
-		mesh.rings = 3
+		mesh.rings = 2
 		_blood_mesh = mesh
 	return _blood_mesh
 
@@ -587,9 +691,9 @@ static func _get_blood_mesh() -> Mesh:
 static func _get_blood_material() -> Material:
 	if _blood_material == null:
 		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.32, 0.01, 0.01, 1.0)
-		material.roughness = 0.88
-		material.metallic = 0.02
+		material.albedo_color = Color(0.5, 0.012, 0.012, 1.0)
+		material.roughness = 0.2
+		material.metallic_specular = 0.8
 		_blood_material = material
 	return _blood_material
 
@@ -597,8 +701,8 @@ static func _get_blood_material() -> Material:
 static func _get_stump_cap_material() -> Material:
 	if _stump_cap_material == null:
 		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.65, 0.05, 0.05, 1.0)
-		material.roughness = 0.7
+		material.albedo_color = Color(0.6, 0.03, 0.03, 1.0)
+		material.roughness = 0.25
 		material.metallic = 0.05
 		_stump_cap_material = material
 	return _stump_cap_material

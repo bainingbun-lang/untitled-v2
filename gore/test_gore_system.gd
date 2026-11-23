@@ -72,9 +72,9 @@ func _run() -> void:
 	var puddle := GoreScript.create_puddle(parent, Vector3(0.0, 0.0, 0.0), Vector3.UP, 0.3)
 	_expect(puddle != null and puddle.name == "BloodPuddle", "charco creado")
 	_expect(GoreScript.puddle_count() == 1, "un charco")
-	var old_scale: float = puddle.scale.x
+	var old_scale: float = puddle.get_meta("diameter")
 	GoreScript.update(1.0)
-	_expect(puddle.scale.x > old_scale, "charco crece con update")
+	_expect(float(puddle.get_meta("diameter")) > old_scale, "charco crece con update")
 	GoreScript.clear()
 	await process_frame
 	_expect(GoreScript.decal_count() == 0, "clear limpia decals")
@@ -159,8 +159,8 @@ func _run() -> void:
 	_case = "capas hueso, chorro y exit wound"
 	GoreScript.clear()
 	GoreScript.apply_gore_level(GoreScript.GoreLevel.NORMAL)
-	var bone_inner: Color = (DecalsScript._get_decal_material_for_layer(1, 2, 0.9) as StandardMaterial3D).albedo_color
-	var bone_outer: Color = (DecalsScript._get_decal_material_for_layer(0, 2, 0.9) as StandardMaterial3D).albedo_color
+	var bone_inner: Color = DecalsScript.layer_color(1, 2, 0.9)
+	var bone_outer: Color = DecalsScript.layer_color(0, 2, 0.9)
 	_expect(bone_inner.g > 0.5 and bone_outer.g < 0.1, "hueso expuesto: centro claro, anillo rojo")
 	_expect(DecalsScript.DamageLayer.BONE == 2, "capa BONE existe")
 	var body := StaticBody3D.new()
@@ -171,7 +171,7 @@ func _run() -> void:
 	body.add_child(shape)
 	root.add_child(body)
 	var spray = GoreScript.blood_spray(body, Vector3(0.15, 0, 0), Vector3.RIGHT)
-	_expect(spray is GPUParticles3D and spray.lifetime == 0.3 and spray.one_shot, "blood_spray GPUParticles3D 0.3s")
+	_expect(spray is GPUParticles3D and spray.lifetime == 0.4 and spray.one_shot, "blood_spray GPUParticles3D 0.4s")
 	await physics_frame
 	await physics_frame
 	var exit_w: Dictionary = BulletImpact._try_exit_wound(body, Vector3(0.15, 0, 0), Vector3.RIGHT)
