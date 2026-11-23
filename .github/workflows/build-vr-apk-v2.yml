@@ -64,20 +64,17 @@ jobs:
           "$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging out/untitled_vr_debug.apk | grep -E "^package:|headtracking"
           unzip -l out/untitled_vr_debug.apk | grep -E "libopenxr_loader|libgodot_android|vr_boot" | head
           sha256sum out/untitled_vr_debug.apk | tee out/SHA256.txt
-      - uses: actions/upload-artifact@v4
-        with:
-          name: untitled-vr-debug-apk
-          path: out/untitled_vr_debug.apk
-          retention-days: 30
+      - name: SHA256
+        run: sha256sum out/untitled_vr_release.apk | tee out/SHA256.txt
       - name: Publicar en Releases (descarga directa)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete vr-latest --yes --cleanup-tag || true
-          gh release create vr-latest out/untitled_vr_debug.apk out/SHA256.txt --target "$GITHUB_SHA" --prerelease --title "APK VR (ultima compilacion)" --notes "Compilado por GitHub Actions desde $GITHUB_SHA. Build de depuracion para Meta Quest. No probado en casco por el autor del CI."
+          gh release create vr-latest out/untitled_vr_release.apk out/SHA256.txt --target "$GITHUB_SHA" --prerelease --title "APK VR (ultima compilacion)" --notes "Compilado por GitHub Actions desde $GITHUB_SHA. Build de release para Meta Quest. No probado en casco por el CI."
       - name: Publicar version numerada (apk-N)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           N=$(( $(gh release list --limit 200 --json tagName -q '[.[] | select(.tagName | startswith("apk-"))] | length') + 1 ))
-          gh release create "apk-$N" out/untitled_vr_debug.apk out/SHA256.txt --target "$GITHUB_SHA" --prerelease --title "APK $N (${GITHUB_SHA:0:7})" --notes "Commit $GITHUB_SHA. Firma fija; se actualiza encima de versiones con la misma clave."
+          gh release create "apk-$N" out/untitled_vr_release.apk out/SHA256.txt --target "$GITHUB_SHA" --prerelease --title "APK $N (${GITHUB_SHA:0:7})" --notes "Commit $GITHUB_SHA. Firma fija; se actualiza encima de versiones con la misma clave."
