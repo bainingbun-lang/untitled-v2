@@ -87,7 +87,7 @@ static func ensure_pieces() -> bool:
 	if zr.open(PACK) != OK:
 		return false
 	var stamp := PIECES + ".stamp"
-	var size := str(FileAccess.get_file_as_bytes(PACK).size()) + "-v2"
+	var size := str(FileAccess.get_file_as_bytes(PACK).size()) + "-v3"
 	if FileAccess.file_exists(stamp) and FileAccess.get_file_as_string(stamp) == size:
 		zr.close()
 		return true
@@ -98,6 +98,13 @@ static func ensure_pieces() -> bool:
 	for f in zr.get_files():
 		if f.ends_with(".import"):
 			continue
+		if f.ends_with(".png"):
+			var img := Image.new()
+			if img.load_png_from_buffer(zr.read_file(f)) == OK:
+				if img.get_width() > 1024:
+					img.resize(1024, 1024, Image.INTERPOLATE_BILINEAR)
+				img.save_png(PIECES + f.get_file())
+				continue
 		var fa := FileAccess.open(PIECES + f.get_file(), FileAccess.WRITE)
 		if fa != null:
 			fa.store_buffer(zr.read_file(f))
