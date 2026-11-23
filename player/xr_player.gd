@@ -33,6 +33,7 @@ func _ready() -> void:
 		c.add_child(extras)
 		c.button_pressed.connect(_on_button_pressed)
 	_build_holsters()
+	_fill_holsters.call_deferred()
 
 
 func _physics_process(_delta: float) -> void:
@@ -48,6 +49,19 @@ func _build_holsters() -> void:
 	add_child(holsters)
 	holster_right = _add_holster("HolsterRight", HIP_X)
 	holster_left = _add_holster("HolsterLeft", -HIP_X)
+
+
+## Pone en cada funda el arma elegida en Configuración (cadera derecha / izquierda); se saca con grip cerca de la cadera.
+func _fill_holsters() -> void:
+	var scene := get_parent()
+	for pair in [[holster_right, GameConfig.right_pocket], [holster_left, GameConfig.left_pocket]]:
+		var path := "res://weapons/xr_%s.tscn" % str(pair[1]).trim_prefix("xr_")
+		if scene == null or not ResourceLoader.exists(path) or not pair[0].has_method("pick_up_object"):
+			continue
+		var gun := (load(path) as PackedScene).instantiate() as Node3D
+		scene.add_child(gun)
+		gun.global_position = (pair[0] as Node3D).global_position
+		pair[0].pick_up_object(gun)
 
 
 func _add_holster(n: String, x: float) -> Node3D:

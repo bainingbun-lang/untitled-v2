@@ -13,6 +13,8 @@ var _viewport: SubViewport
 var _panel: MeshInstance3D
 var _controllers: Array[XRController3D] = []
 var _pressed := {}
+var _held := {}
+var _scroll_acc := 0.0
 
 
 func _ready() -> void:
@@ -139,15 +141,31 @@ func _process(delta: float) -> void:
 		var motion := InputEventMouseMotion.new()
 		motion.position = hit["pos"]
 		motion.global_position = hit["pos"]
+		motion.button_mask = MOUSE_BUTTON_MASK_LEFT if _held.get(c, false) else 0
 		_viewport.push_input(motion)
+		var stick := c.get_vector2("primary").y
+		if absf(stick) > 0.5:
+			_scroll_acc += delta
+			if _scroll_acc > 0.08:
+				_scroll_acc = 0.0
+				for pressed in [true, false]:
+					var w := InputEventMouseButton.new()
+					w.button_index = MOUSE_BUTTON_WHEEL_UP if stick > 0.0 else MOUSE_BUTTON_WHEEL_DOWN
+					w.pressed = pressed
+					w.factor = 3.0
+					w.position = hit["pos"]
+					w.global_position = hit["pos"]
+					_viewport.push_input(w)
 
 
 func _on_button(action: String, controller: XRController3D, pressed: bool) -> void:
-	if action != "grab" and action != "trigger_click":
+	if not action in ["grab", "trigger_click", "grip_click", "ax_button", "select_button"]:
 		return
 	var hit := _ray_panel(controller)
 	if hit.is_empty():
+		_held[controller] = false
 		return
+	_held[controller] = pressed
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = pressed
