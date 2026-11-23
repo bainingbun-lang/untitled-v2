@@ -29,7 +29,7 @@ func hold(weapon_id: String, node: Node3D) -> void:
 	if _is_xr_weapon():
 		# Arma xr-tools: se agarra con el FunctionPickup de su mando.
 		var pk := _xr_pickup()
-		if pk != null:
+		if pk != null and pk.get_controller() != null:
 			weapon.call("pick_up", pk)
 	elif weapon.has_method("pick_up"):
 		weapon.call("pick_up", controller, controller)
