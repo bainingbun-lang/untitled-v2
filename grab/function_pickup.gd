@@ -24,7 +24,7 @@
 #   addons/godot-xr-tools/functions/function_pickup.gd
 
 @tool
-class_name XRToolsFunctionPickup
+## (sin class_name: el addon define XRToolsFunctionPickup)
 extends Node3D
 
 ## Grip pickup adapted from godot-xr-tools. Reads the analogue grip value

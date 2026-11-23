@@ -24,7 +24,7 @@
 #   addons/godot-xr-tools/objects/pickable.gd
 
 @tool
-class_name XRToolsPickable
+## (sin class_name: el addon godot-xr-tools define XRToolsPickable)
 extends RigidBody3D
 
 ## Pickable object adapted from godot-xr-tools. Keeps the original

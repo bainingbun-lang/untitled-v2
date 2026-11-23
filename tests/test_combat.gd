@@ -8,6 +8,7 @@ var _fails := 0
 
 
 func _init() -> void:
+	await process_frame  # deja que los autoloads del addon existan antes de compilar la escena
 	var sb = load("res://sandbox/sandbox.tscn").instantiate()
 	root.add_child(sb)
 	var t0 := Time.get_ticks_msec()
