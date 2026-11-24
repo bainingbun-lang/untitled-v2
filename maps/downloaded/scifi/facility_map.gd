@@ -41,6 +41,8 @@ const CEIL_LIGHTS := [[1.5, 1.5], [5.5, 1.5], [9.5, 1.5], [2.5, 5.5], [8.0, 5.5]
 
 var _cache := {}
 var _soft := {}
+var _tex_cache := {}
+var _mat_cache := {}
 var _mats := {}
 var _floors: Array = []
 var _loaded := 0
@@ -172,6 +174,26 @@ func _tint(n: Node3D, color: Color) -> void:
 
 ## Las texturas del pack son muy metalicas y sin reflejos se ven negras: se baja el metal y se
 ## sube la rugosidad para que la luz de ambiente las ilumine.
+func _canon(t: Texture2D) -> Texture2D:
+	if t == null:
+		return null
+	var k := hash(t.get_image().get_data())
+	if not _tex_cache.has(k):
+		_tex_cache[k] = t
+	return _tex_cache[k]
+
+
+func _dedupe(c: StandardMaterial3D) -> StandardMaterial3D:
+	var ids := []
+	for slot in ["albedo_texture", "normal_texture", "metallic_texture", "roughness_texture"]:
+		var t = c.get(slot)
+		ids.append(t.get_instance_id() if t != null else 0)
+	var k := str(ids) + str(c.cull_mode) + c.albedo_color.to_html() + str(c.metallic) + str(c.roughness) + str(c.normal_scale)
+	if not _mat_cache.has(k):
+		_mat_cache[k] = c
+	return _mat_cache[k]
+
+
 func _soften_metal(n: Node3D, v := 0) -> void:
 	for mi in _meshes(n):
 		var inst := mi as MeshInstance3D
@@ -186,7 +208,9 @@ func _soften_metal(n: Node3D, v := 0) -> void:
 				var c := m.duplicate() as StandardMaterial3D
 				c.metallic = minf(c.metallic, 0.2)
 				c.roughness = maxf(c.roughness, 0.55)
-				_soft[key] = c
+				for slot in ["albedo_texture", "normal_texture", "metallic_texture", "roughness_texture"]:
+					c.set(slot, _canon(c.get(slot)))
+				_soft[key] = _dedupe(c)
 			inst.set_surface_override_material(i, _soft[key])
 
 

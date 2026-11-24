@@ -359,7 +359,7 @@ func _on_player_teleported(delta_transform : Transform3D) -> void:
 
 # Updates our finger digits when our skeleton updates
 func _on_skeleton_updated() -> void:
-	if not hand_skeleton:
+	if not hand_skeleton or not is_inside_tree() or not hand_skeleton.is_inside_tree():
 		return
 
 	var bone_count: int = hand_skeleton.get_bone_count()
