@@ -7,6 +7,7 @@ extends XRToolsPickable
 signal shot(hit: Dictionary)
 
 const BulletImpact = preload("res://gore/bullet_impact.gd")
+const RemoteLog = preload("res://debug/remote_log.gd")
 
 @export var damage := 40.0
 @export var fire_interval := 0.25
@@ -82,9 +83,11 @@ func try_fire() -> bool:
 	if _cooldown > 0.0 or _muzzle == null:
 		return false
 	_cooldown = fire_interval
+	RemoteLog.crumb("FIRE %s: inicio cham=%s" % [name, str(reload.chambered)])
 	if not reload.fire():
 		return false
 	_play(shot_sound)
+	RemoteLog.crumb("FIRE %s: sonido ok" % name)
 	_kick()
 	var space := get_world_3d().direct_space_state
 	var exclude: Array[RID] = [get_rid()]
@@ -100,9 +103,11 @@ func try_fire() -> bool:
 		var q := PhysicsRayQueryParameters3D.create(from, from + dir * max_range)
 		q.exclude = exclude
 		var hit := space.intersect_ray(q)
+		RemoteLog.crumb("FIRE %s: rayo hit=%s" % [name, str(hit.get("collider", "nada"))])
 		if not hit.is_empty():
 			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], damage / pellets, self)
 		shot.emit(hit)
+	RemoteLog.crumb("FIRE %s: fin" % name)
 	return true
 
 

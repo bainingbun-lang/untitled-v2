@@ -13,6 +13,30 @@ static func impact() -> AudioStreamWAV:
 		return (randf() * 2.0 - 1.0) * exp(-t * 30.0) * 0.8 + sin(TAU * 90.0 * t) * exp(-t * 18.0) * 0.6)
 
 
+## Clic de menú: tic corto y agudo.
+static func click() -> AudioStreamWAV:
+	return _make("click", 0.05, func(t: float, d: float) -> float:
+		return sin(TAU * 1400.0 * t) * exp(-t * 90.0) * 0.5)
+
+
+## Choque de metal: tono agudo con resonancia corta.
+static func metal() -> AudioStreamWAV:
+	return _make("metal", 0.3, func(t: float, d: float) -> float:
+		return (sin(TAU * 820.0 * t) * 0.5 + sin(TAU * 1370.0 * t) * 0.3 + (randf() * 2.0 - 1.0) * 0.2) * exp(-t * 14.0) * 0.7)
+
+
+## Choque de madera: golpe seco medio.
+static func wood() -> AudioStreamWAV:
+	return _make("wood", 0.15, func(t: float, d: float) -> float:
+		return (sin(TAU * 240.0 * t) * 0.6 + (randf() * 2.0 - 1.0) * 0.3) * exp(-t * 35.0) * 0.8)
+
+
+## Rebote blando (goma): tono grave que cae rápido.
+static func soft() -> AudioStreamWAV:
+	return _make("soft", 0.12, func(t: float, d: float) -> float:
+		return sin(TAU * (160.0 - 400.0 * t) * t) * exp(-t * 28.0) * 0.7)
+
+
 ## Grito: tono que sube y cae con vibrato, más ruido de aire.
 static func shout() -> AudioStreamWAV:
 	return _make("shout", 0.7, func(t: float, d: float) -> float:

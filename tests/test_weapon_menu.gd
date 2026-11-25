@@ -1,5 +1,6 @@
 extends SceneTree
 
+const VrSim = preload("res://tools/vr_sim/vr_sim.gd")
 var fails := 0
 
 
@@ -17,6 +18,10 @@ func _init() -> void:
 	root.add_child(player)
 	for i in 10:
 		await process_frame
+	# Sin trackers registrados, xr-tools falla al agarrar desde el menu (grab_point_hand.gd:144).
+	var sim = VrSim.new(self)
+	await sim.attach(root)
+	await sim.frames(5)
 	var wm = player.get_node("WeaponMenu")
 	_expect(wm.entries.size() > 1, "menu con armas (%s)" % str(wm.entries))
 	var right: XRController3D = player.right_controller
@@ -39,7 +44,7 @@ func _init() -> void:
 	_expect(not wm.is_open(), "el menu se cierra")
 	var ak = wm.give("right", "ak47")
 	_expect(ak != null and pickup.picked_up_object == ak, "cambiar de arma sustituye la anterior")
-	await process_frame
+	await create_timer(0.9).timeout
 	_expect(not is_instance_valid(held) or held.is_queued_for_deletion(), "el arma anterior se libera")
 	print("RESULTADO: ", "OK" if fails == 0 else "%d fallos" % fails)
 	quit(1 if fails else 0)

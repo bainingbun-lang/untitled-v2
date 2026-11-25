@@ -11,6 +11,11 @@ const GameConfig = preload("res://storage/game_config.gd")
 const CATALOG := "res://maps/catalog.json"
 const DIFFICULTIES := [["Fácil", "facil"], ["Normal", "normal"], ["Difícil", "dificil"]]
 const GORE_LEVELS := ["Apagado", "Normal", "Extremo"]
+const GORE_HELP := [
+	"Apagado: sin sangre, heridas ni desmembramiento.",
+	"Normal: sangre y heridas con límite de manchas; recomendado para rendimiento estable.",
+	"Extremo: más sangre, heridas profundas y desmembramiento; más carga gráfica en el visor.",
+]
 const POCKET_LABELS := {"pistol": "Pistola", "ak47": "AK-47", "knife": "Cuchillo", "sniper": "Sniper", "machete": "Machete", "shotgun": "Escopeta", "barrett": "Barrett", "smg": "Subfusil", "revolver": "Revólver", "fusil": "Fusil de asalto", "pdw": "PDW", "tanto": "Tanto", "hacha": "Hacha", "katana": "Katana", "bate": "Bate de béisbol", "francotirador": "Francotirador (modelo CC0)", "xr_pistol": "Pistola XR (agarre real)", "xr_ak47": "AK XR", "xr_sniper": "Sniper XR", "xr_barrett": "Barrett XR", "xr_shotgun": "Escopeta XR", "xr_smg": "Subfusil XR"}
 
 const BG := Color("0d1014")
@@ -160,7 +165,11 @@ func _show_play() -> void:
 		b.text = "   " + str(m.get("name", "Mapa"))
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.custom_minimum_size = Vector2(0, 56)
-		b.pressed.connect(func() -> void: get_tree().change_scene_to_file(str(m.get("scene", ""))))
+		b.pressed.connect(func() -> void:
+			b.disabled = true
+			if not await MapLoader.go(get_tree(), str(m.get("scene", "")), func(p: float) -> void: b.text = "   Cargando %d%%" % int(p * 100.0)):
+				b.disabled = false
+				b.text = "   " + str(m.get("name", "Mapa")) + " (fallo)")
 		_content.add_child(b)
 
 
@@ -234,14 +243,19 @@ func _show_settings() -> void:
 	_status.text = ""
 	_content.add_child(_heading("Gameplay"))
 
-	var gore := OptionButton.new()
+	var gore := CycleButton.new()
 	for i in GORE_LEVELS.size():
 		gore.add_item(GORE_LEVELS[i], i)
 	gore.select(GameConfig.gore_level)
-	gore.item_selected.connect(func(i: int) -> void: GameConfig.set_gore(i); _save())
+	var gore_help := _muted(GORE_HELP[GameConfig.gore_level])
+	gore.item_selected.connect(func(i: int) -> void:
+		GameConfig.set_gore(i)
+		gore_help.text = GORE_HELP[i]
+		_save())
 	_content.add_child(_setting_row("Gore", gore))
+	_content.add_child(gore_help)
 
-	var diff := OptionButton.new()
+	var diff := CycleButton.new()
 	var selected := 1
 	for i in DIFFICULTIES.size():
 		diff.add_item(DIFFICULTIES[i][0], i)
@@ -251,7 +265,7 @@ func _show_settings() -> void:
 	diff.item_selected.connect(func(i: int) -> void: GameConfig.set_difficulty(DIFFICULTIES[i][1]); _save())
 	_content.add_child(_setting_row("Dificultad", diff))
 
-	var mags := OptionButton.new()
+	var mags := CycleButton.new()
 	mags.add_item("Infinitos", 0)
 	mags.add_item("Limitados", 1)
 	mags.select(0 if GameConfig.infinite_mags else 1)
@@ -260,7 +274,7 @@ func _show_settings() -> void:
 
 	_content.add_child(_spacer_v())
 	_content.add_child(_heading("Población"))
-	var dens := OptionButton.new()
+	var dens := CycleButton.new()
 	var dkeys := ["bajo", "medio", "alto"]
 	var dlabels := ["Bajo", "Medio", "Alto"]
 	for i in dkeys.size():
@@ -269,19 +283,19 @@ func _show_settings() -> void:
 			dens.select(i)
 	dens.item_selected.connect(func(i: int) -> void: GameConfig.density = dkeys[i]; _save())
 	_content.add_child(_setting_row("Relleno de NPC", dens))
-	var zomb := OptionButton.new()
+	var zomb := CycleButton.new()
 	zomb.add_item("Apagado", 0)
 	zomb.add_item("Encendido", 1)
 	zomb.select(1 if GameConfig.zombies else 0)
 	zomb.item_selected.connect(func(i: int) -> void: GameConfig.zombies = i == 1; _save())
 	_content.add_child(_setting_row("Zombis", zomb))
-	var pol := OptionButton.new()
+	var pol := CycleButton.new()
 	pol.add_item("Apagada", 0)
 	pol.add_item("Encendida", 1)
 	pol.select(1 if GameConfig.police else 0)
 	pol.item_selected.connect(func(i: int) -> void: GameConfig.police = i == 1; _save())
 	_content.add_child(_setting_row("Policía tras disparos", pol))
-	var pdel := OptionButton.new()
+	var pdel := CycleButton.new()
 	pdel.add_item("30 segundos", 0)
 	pdel.add_item("5 minutos", 1)
 	pdel.select(1 if GameConfig.police_delay >= 300 else 0)
@@ -358,3 +372,41 @@ func _spacer_v() -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(0, 12)
 	return c
+
+
+## Sustituye al OptionButton: su lista emergente es una ventana que no se ve ni se puede tocar en el panel VR.
+## "<" y ">" recorren las opciones en ambos sentidos; el centro también avanza.
+class CycleButton extends HBoxContainer:
+	signal item_selected(index: int)
+	var _items: Array[String] = []
+	var _sel := 0
+	var _mid := Button.new()
+
+	func _init() -> void:
+		var prev := Button.new()
+		prev.text = "<"
+		prev.custom_minimum_size = Vector2(44, 0)
+		prev.pressed.connect(_step.bind(-1))
+		var next := Button.new()
+		next.text = ">"
+		next.custom_minimum_size = Vector2(44, 0)
+		next.pressed.connect(_step.bind(1))
+		_mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_mid.pressed.connect(_step.bind(1))
+		for b in [prev, _mid, next]:
+			add_child(b)
+
+	func add_item(label: String, _id := 0) -> void:
+		_items.append(label)
+		if _items.size() == 1:
+			select(0)
+
+	func select(index: int) -> void:
+		_sel = clampi(index, 0, maxi(_items.size() - 1, 0))
+		_mid.text = _items[_sel] if not _items.is_empty() else ""
+
+	func _step(dir: int) -> void:
+		if _items.is_empty():
+			return
+		select(posmod(_sel + dir, _items.size()))
+		item_selected.emit(_sel)

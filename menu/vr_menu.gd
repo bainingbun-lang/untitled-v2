@@ -166,6 +166,9 @@ func _on_button(action: String, controller: XRController3D, pressed: bool) -> vo
 		_held[controller] = false
 		return
 	_held[controller] = pressed
+	if pressed:
+		Sfx.play_at(self, Sfx.click(), hit["world"])
+		controller.trigger_haptic_pulse("haptic", 0.0, 0.5, 0.06, 0.0)
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	click.pressed = pressed

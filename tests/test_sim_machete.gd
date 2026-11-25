@@ -66,7 +66,7 @@ func _init() -> void:
 	_expect(not m._cooldowns.is_empty(), "la hoja corto al NPC")
 	_expect(not is_instance_valid(npc) or npc.get("health") < hp0, "el NPC perdio vida (%.0f -> %s)" % [hp0, str(npc.get("health")) if is_instance_valid(npc) else "muerto"])
 	_expect(m._hit.playing or m._hit.pitch_scale != 1.0, "se disparo el sonido de impacto")
-	await sim.frames(20)
+	await sim.wait(4.5)
 	_expect(rp.picked_up_object == m, "sigue en la mano tras el golpe (pos %s)" % str(m.global_position))
 	await sim.look_at_point(c)
 	await _shot(sim, "tras_el_corte")

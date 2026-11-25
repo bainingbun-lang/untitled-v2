@@ -208,6 +208,6 @@ func _poll_remote_cmd() -> void:
 	print("CMD remoto: ", line)
 	match parts[0]:
 		"scene":
-			get_tree().change_scene_to_file(parts[1])
+			MapLoader.go(get_tree(), parts[1])
 		"quit":
 			get_tree().quit()
