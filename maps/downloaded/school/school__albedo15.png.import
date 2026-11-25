@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ctlurjy8j0vhu"
-path="res://.godot/imported/school__albedo15.png-325c7854a009edd83f3461a269d3397b.ctex"
+path.etc2="res://.godot/imported/school__albedo15.png-325c7854a009edd83f3461a269d3397b.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5006074abc775067e517ad8ea69ee63d"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://maps/downloaded/school/school__albedo15.png"
-dest_files=["res://.godot/imported/school__albedo15.png-325c7854a009edd83f3461a269d3397b.ctex"]
+dest_files=["res://.godot/imported/school__albedo15.png-325c7854a009edd83f3461a269d3397b.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

@@ -3,9 +3,10 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b45mec47pqgu4"
-path="res://.godot/imported/office_31883f53ea3d5c49.png-2a65efd46d6a572cbf2d6059163342bd.ctex"
+path.etc2="res://.godot/imported/office_31883f53ea3d5c49.png-2a65efd46d6a572cbf2d6059163342bd.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "d30cffb7d2570a8395b8c1e823bb625d"
@@ -14,11 +15,11 @@ generator_parameters={
 [deps]
 
 source_file="res://maps/downloaded/office/office_31883f53ea3d5c49.png"
-dest_files=["res://.godot/imported/office_31883f53ea3d5c49.png-2a65efd46d6a572cbf2d6059163342bd.ctex"]
+dest_files=["res://.godot/imported/office_31883f53ea3d5c49.png-2a65efd46d6a572cbf2d6059163342bd.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

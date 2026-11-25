@@ -4,14 +4,18 @@ const HOST := "192.168.1.5"
 const PORT := 8765
 const RETRY_DELAY_MSEC := 3000
 static var retry_at_msec: int = 0
+## Apagado por defecto: cada envío bloquea el hilo principal. Lo cambia el ajuste "Registro de depuración".
+static var enabled: bool = false
 
 
 static func crumb(msg: String) -> void:
+	if not enabled:
+		return
 	send("crumb", "%s | mem=%dMB" % [msg, int(OS.get_static_memory_usage() / 1048576)])
 
 
 static func send(tag: String, body: String) -> void:
-	if Time.get_ticks_msec() < retry_at_msec or DisplayServer.get_name() == "headless":
+	if not enabled or Time.get_ticks_msec() < retry_at_msec or DisplayServer.get_name() == "headless":
 		return
 	var tcp := StreamPeerTCP.new()
 	if tcp.connect_to_host(HOST, PORT) != OK:

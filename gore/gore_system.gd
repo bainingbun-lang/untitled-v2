@@ -563,12 +563,19 @@ static func _remove_splatter(splatter: Control) -> void:
 		splatter.queue_free()
 
 
+static var _cleanup_timer := 0.0
+
+
 static func update(delta: float) -> void:
 	if not gore_enabled():
 		return
 	_update_stump_bleeds(delta)
 	WoundDecalsScript.update_puddles(delta)
-	_cleanup_distant()
+	# La limpieza por distancia no necesita cada fotograma: 4 veces por segundo basta.
+	_cleanup_timer -= delta
+	if _cleanup_timer <= 0.0:
+		_cleanup_timer = 0.25
+		_cleanup_distant()
 
 
 static func _update_stump_bleeds(delta: float) -> void:
@@ -590,7 +597,10 @@ static func _update_stump_bleeds(delta: float) -> void:
 		# k: 1 recién cortado -> 0 apagado. El chorro pulsa con el "latido" y se debilita.
 		var k: float = clampf(float(bleed["timer"]) / STUMP_BLEED_TIME, 0.0, 1.0)
 		bleed["age"] = float(bleed.get("age", 0.0)) + delta
-		var jet := (node as Node).get_node_or_null("Jet") as CPUParticles3D
+		var jet = bleed.get("jet", null)
+		if not is_instance_valid(jet):
+			jet = (node as Node).get_node_or_null("Jet") as CPUParticles3D
+			bleed["jet"] = jet
 		if jet != null:
 			jet.emitting = k > 0.12
 			jet.initial_velocity_max = lerpf(0.8, 3.4, k) * (0.8 + 0.2 * sin(float(bleed["age"]) * 9.0))

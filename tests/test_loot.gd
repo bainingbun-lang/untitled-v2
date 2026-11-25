@@ -38,6 +38,10 @@ func _init() -> void:
 	await sim.squeeze_grip(&"right_hand", 1.0)
 	await sim.frames(8)
 	_expect(gun.is_picked_up() and rp.picked_up_object == gun, "se puede agarrar el arma del muerto")
+	for _i in 180: # el cargador de repuesto puede seguir rodando tras caer
+		if mag.linear_velocity.length() < 0.05:
+			break
+		await sim.frames(1)
 	await sim.reach(&"left_hand", mag.global_position, 0.3)
 	await sim.squeeze_grip(&"left_hand", 1.0)
 	await sim.frames(8)

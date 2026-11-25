@@ -8,6 +8,7 @@ extends Control
 const ModPacks = preload("res://mods/mod_packs.gd")
 const AppPaths = preload("res://storage/app_paths.gd")
 const GameConfig = preload("res://storage/game_config.gd")
+const RemoteLog = preload("res://debug/remote_log.gd")
 const CATALOG := "res://maps/catalog.json"
 const DIFFICULTIES := [["Fácil", "facil"], ["Normal", "normal"], ["Difícil", "dificil"]]
 const GORE_LEVELS := ["Apagado", "Normal", "Extremo"]
@@ -301,6 +302,12 @@ func _show_settings() -> void:
 	pdel.select(1 if GameConfig.police_delay >= 300 else 0)
 	pdel.item_selected.connect(func(i: int) -> void: GameConfig.police_delay = 300 if i == 1 else 30; _save())
 	_content.add_child(_setting_row("Llegada de la policía", pdel))
+	var dbg := CycleButton.new()
+	dbg.add_item("Apagado", 0)
+	dbg.add_item("Encendido", 1)
+	dbg.select(1 if GameConfig.debug_log else 0)
+	dbg.item_selected.connect(func(i: int) -> void: GameConfig.debug_log = i == 1; RemoteLog.enabled = GameConfig.debug_log; _save())
+	_content.add_child(_setting_row("Registro de depuración (PC)", dbg))
 
 	_content.add_child(_spacer_v())
 	_content.add_child(_heading("Datos"))

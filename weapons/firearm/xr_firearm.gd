@@ -80,7 +80,7 @@ func _physics_process(delta: float) -> void:
 
 ## Dispara si hay bala en recámara y la cadencia lo permite. Devuelve true si salió el tiro.
 func try_fire() -> bool:
-	if _cooldown > 0.0 or _muzzle == null:
+	if _cooldown > 0.0 or not is_inside_tree() or _muzzle == null or not is_instance_valid(_muzzle):
 		return false
 	_cooldown = fire_interval
 	RemoteLog.crumb("FIRE %s: inicio cham=%s" % [name, str(reload.chambered)])
@@ -89,7 +89,13 @@ func try_fire() -> bool:
 	_play(shot_sound)
 	RemoteLog.crumb("FIRE %s: sonido ok" % name)
 	_kick()
-	var space := get_world_3d().direct_space_state
+	RemoteLog.crumb("FIRE %s: kick ok" % name)
+	var world := get_world_3d()
+	if world == null:
+		RemoteLog.crumb("FIRE %s: sin mundo" % name)
+		return false
+	var space := world.direct_space_state
+	RemoteLog.crumb("FIRE %s: espacio ok" % name)
 	var exclude: Array[RID] = [get_rid()]
 	if is_instance_valid(_mag):
 		exclude.append(_mag.get_rid())
@@ -102,6 +108,7 @@ func try_fire() -> bool:
 		var from := _muzzle.global_position
 		var q := PhysicsRayQueryParameters3D.create(from, from + dir * max_range)
 		q.exclude = exclude
+		RemoteLog.crumb("FIRE %s: rayo armado" % name)
 		var hit := space.intersect_ray(q)
 		RemoteLog.crumb("FIRE %s: rayo hit=%s" % [name, str(hit.get("collider", "nada"))])
 		if not hit.is_empty():
@@ -112,7 +119,7 @@ func try_fire() -> bool:
 
 
 func _kick() -> void:
-	if _model == null:
+	if _model == null or not is_instance_valid(_model):
 		return
 	_model.transform = _model_rest.translated_local(Vector3(0, 0, recoil_back)) \
 			.rotated_local(Vector3.RIGHT, deg_to_rad(recoil_up_deg))

@@ -4,6 +4,7 @@ extends RefCounted
 ## Ajustes de juego que el menú cambia. Se guardan en settings.cfg, sección [gameplay].
 const AppPaths = preload("res://storage/app_paths.gd")
 const GoreScript = preload("res://gore/gore_system.gd")
+const RemoteLog = preload("res://debug/remote_log.gd")
 const SECTION := "gameplay"
 
 ## Escala de daño de los NPC contra el jugador: Fácil, Normal, Difícil.
@@ -24,6 +25,8 @@ static var infinite_mags: bool = true
 ## Policía: si está encendida, llega tras disparos. delay en segundos (30 s o 300 s).
 static var police: bool = false
 static var police_delay: int = 30
+## Envía el registro de depuración al PC (migas FIRE, BOOT, GRIP...). Apagado = sin coste.
+static var debug_log: bool = false
 
 
 static func npc_damage_scale() -> float:
@@ -45,6 +48,8 @@ static func load_config() -> void:
 	infinite_mags = bool(cf.get_value(SECTION, "infinite_mags", true))
 	police = bool(cf.get_value(SECTION, "police", false))
 	police_delay = int(cf.get_value(SECTION, "police_delay", 30))
+	debug_log = bool(cf.get_value(SECTION, "debug_log", false))
+	RemoteLog.enabled = debug_log
 	if not POCKET_WEAPONS.has(left_pocket):
 		left_pocket = "pistol"
 	GoreScript.set_gore_level(gore_level)
@@ -62,6 +67,7 @@ static func save_config() -> int:
 	cf.set_value(SECTION, "infinite_mags", infinite_mags)
 	cf.set_value(SECTION, "police", police)
 	cf.set_value(SECTION, "police_delay", police_delay)
+	cf.set_value(SECTION, "debug_log", debug_log)
 	return cf.save(AppPaths.settings_file())
 
 
