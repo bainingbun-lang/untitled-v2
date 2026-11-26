@@ -84,7 +84,7 @@ func _update_controller_signals() -> void:
 # Called when a controller button is released
 func _on_controller_trigger_released(trigger_button : String):
 	# Skip if not pose-toggle button
-	if trigger_button != "trigger_click" and trigger_button != "grab":
+	if trigger_button != "trigger_click":
 		return
 
 	mesh_trigger.rotate(Vector3(1, 0, 0), value)
@@ -94,7 +94,7 @@ func _on_controller_trigger_released(trigger_button : String):
 # Called when a controller button is pressed
 func _on_controller_trigger_pressed(trigger_button : String):
 	# Skip if not pose-toggle button
-	if trigger_button != "trigger_click" and trigger_button != "grab":
+	if trigger_button != "trigger_click":
 		return
 	triggered = true
 	fired.emit()
