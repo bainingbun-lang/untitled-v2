@@ -122,8 +122,39 @@ func _cast_shot() -> void:
 		RemoteLog.crumb("FIRE %s: rayo hit=%s" % [name, str(hit.get("collider", "nada"))])
 		if not hit.is_empty():
 			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], damage / pellets, self)
+			_paint_npc_damage(hit["collider"], hit["position"])
 		shot.emit(hit)
 	RemoteLog.crumb("FIRE %s: fin" % name)
+
+
+func _paint_npc_damage(collider: Object, point: Vector3) -> void:
+	if not (collider is Node) or not is_instance_valid(collider):
+		return
+	var npc := collider as Node
+	while npc != null and not (npc is BasicNpc):
+		npc = npc.get_parent()
+	if npc == null:
+		return
+	var mesh := npc.find_child("*", true, false) as MeshInstance3D
+	if mesh == null:
+		for c in npc.find_children("*", "MeshInstance3D", true, false):
+			mesh = c
+			break
+	if mesh == null or not is_instance_valid(mesh):
+		return
+	var uv := DamageUV.uv_at_point(mesh, point)
+	if uv.x < 0.0:
+		return
+	var id := npc.get_instance_id()
+	GoreSystem.apply_damage_to_mask(id, uv, 1.0, 8)
+	var mat := mesh.material_override as ShaderMaterial
+	if mat == null:
+		GoreDamageMaterial.bind_damage_mask(id, mesh)
+	else:
+		var tex := mat.get_shader_parameter("damage_mask") as ImageTexture
+		var img := GoreSystem.get_damage_mask(id)
+		if tex != null and img != null:
+			tex.update(img)
 
 
 func _kick() -> void:
