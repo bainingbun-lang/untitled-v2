@@ -136,6 +136,7 @@ func _kick() -> void:
 func _on_mag_in(mag: Node3D) -> void:
 	_mag = mag
 	reload.insert_magazine(mag.rounds)
+	RemoteLog.crumb("RELOAD %s: cargador entra rounds=%d mag_in=%s" % [name, mag.rounds, str(reload.magazine_in)])
 	if spawn_chambered:
 		spawn_chambered = false
 		reload.rack_slide()
@@ -146,16 +147,22 @@ func _on_mag_out() -> void:
 		_mag.rounds = reload.magazine_rounds
 	_mag = null
 	reload.eject_magazine()
+	RemoteLog.crumb("RELOAD %s: cargador sale" % name)
 
 
 # Corredera atrás del todo y de vuelta adelante = un ciclo de recarga.
 func _on_slide_moved(pos: float) -> void:
 	var limit: float = get_node("SlideOrigin").limit_maximum
-	if pos >= limit * 0.9:
+	# el recorrido real del mango es corto (~3 cm): umbrales alcanzables
+	if pos >= limit * 0.6:
+		if not _slide_back:
+			RemoteLog.crumb("RELOAD %s: corredera atras pos=%.3f limit=%.3f" % [name, pos, limit])
 		_slide_back = true
-	elif _slide_back and pos <= limit * 0.1:
+	elif _slide_back and pos <= limit * 0.4:
 		_slide_back = false
+		RemoteLog.crumb("RELOAD %s: corredera adelante pos=%.3f limit=%.3f" % [name, pos, limit])
 		reload.rack_slide()
+		RemoteLog.crumb("RELOAD %s: rack cham=%s" % [name, str(reload.chambered)])
 
 
 ## Con el arma en la mano, A/X de esa mano expulsa el cargador (B/Y queda libre para el menu de armas) (alternativa a sacarlo con la otra mano).
