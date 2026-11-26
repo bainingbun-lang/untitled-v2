@@ -118,7 +118,7 @@ func _run() -> void:
 			joint.get_parent().free()
 	if is_instance_valid(limb):
 		limb.free()
-	GoreScript.update(0.1)
+	GoreScript.update(0.3) # la limpieza corre cada 0.25 s (ver gore_system.gd update)
 	_expect(GoreScript.part_count() == 0, "referencias a miembros liberados podadas")
 	GoreScript.update(GoreScript.STUMP_BLEED_TIME + 0.1)
 	_expect(GoreScript.stump_bleed_count() == 0, "sangrado expirado y liberado")
