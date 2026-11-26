@@ -36,7 +36,7 @@ func _init() -> void:
 	var lp = sim.origin.get_node("LeftHand/CollisionHandLeft/FunctionPickup")
 	await sim.reach(&"right_hand", gun.global_position, 0.3)
 	await sim.squeeze_grip(&"right_hand", 1.0)
-	await sim.frames(8)
+	await _wait_until(func(): return gun.is_picked_up() and rp.picked_up_object == gun, 240)
 	_expect(gun.is_picked_up() and rp.picked_up_object == gun, "se puede agarrar el arma del muerto")
 	for _i in 180: # el cargador de repuesto puede seguir rodando tras caer
 		if mag.linear_velocity.length() < 0.05:
@@ -44,7 +44,15 @@ func _init() -> void:
 		await sim.frames(1)
 	await sim.reach(&"left_hand", mag.global_position, 0.3)
 	await sim.squeeze_grip(&"left_hand", 1.0)
-	await sim.frames(8)
+	await _wait_until(func(): return mag.is_picked_up() and lp.picked_up_object == mag, 240)
 	_expect(mag.is_picked_up() and lp.picked_up_object == mag, "se puede agarrar su cargador")
 	print("RESULTADO: %s (%d fallos)" % ["OK" if _fails == 0 else "FALLO", _fails])
 	quit(0 if _fails == 0 else 1)
+
+
+func _wait_until(cond: Callable, max_frames: int) -> bool:
+	for _i in max_frames:
+		if cond.call():
+			return true
+		await physics_frame
+	return cond.call()

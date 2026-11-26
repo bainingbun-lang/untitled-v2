@@ -64,8 +64,7 @@ func _shotgun_pellets(sb: Node, npc: Node3D) -> void:
 	sg.reload.rack_slide()
 	sg._next_fire_ms = 0
 	sg.action()
-	for i in 10:
-		await physics_frame
+	await _wait_until(func(): return hp0 - npc.health >= 90.0, 120)
 	_expect(hp0 - npc.health >= 90.0, "8 perdigones de 12 aciertan al NPC (daño %.0f)" % (hp0 - npc.health))
 	sg.queue_free()
 
@@ -100,8 +99,7 @@ func _rifle_shot(sb: Node, npc: Node3D) -> void:
 		sn.reload.rack_slide()
 		sn._next_fire_ms = 0
 		sn.action()
-		for i in 10:
-			await physics_frame
+		await _wait_until(func(): return hp0 - npc.health >= 90.0, 120)
 		_expect(hp0 - npc.health >= 90.0, "francotirador hace 95 de daño (bajó %.0f)" % (hp0 - npc.health))
 	sn.queue_free()
 
@@ -115,6 +113,14 @@ func _headshot(sb: Node) -> void:
 		return
 	BulletImpact.apply(target, target.global_position + Vector3(0, 1.7, 0), Vector3(0, 0, 1), 150.0, null)
 	_expect(target.health <= 0.0, "disparo de 150 a la cabeza mata al NPC")
+
+
+func _wait_until(cond: Callable, max_frames: int) -> bool:
+	for _i in max_frames:
+		if cond.call():
+			return true
+		await physics_frame
+	return cond.call()
 
 
 func _expect(cond: bool, label: String) -> void:

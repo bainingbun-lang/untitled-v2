@@ -46,6 +46,10 @@ func _init() -> void:
 			w.shot.connect(func(_h): shots[0] += 1)
 		await sim.pull_trigger(&"right_hand")
 		await sim.frames(10)
+		for _i in 30:
+			if shots[0] > 0 or not (w and w.has_signal("shot")):
+				break
+			await physics_frame
 		await sim.pull_trigger(&"right_hand", 0.0)
 		await sim.frames(5)
 		if w and "reload" in w:

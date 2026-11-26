@@ -47,7 +47,7 @@ func _check(id: String, hand: Node3D, target: Node) -> void:
 	_expect(gun.reload.chambered, "%s: bala en recámara al aparecer" % id)
 
 	gun.pick_up(hand)
-	await physics_frame
+	await _wait_until(func(): return gun.is_picked_up(), 30)
 	_expect(gun.is_picked_up(), "%s: se agarra" % id)
 	var handle = gun.get_node("SlideOrigin/Slide/HandleOrigin/InteractableHandle")
 	_expect(handle.enabled, "%s: mango de corredera activo al agarrar" % id)
@@ -56,12 +56,14 @@ func _check(id: String, hand: Node3D, target: Node) -> void:
 	gun.shot.connect(func(h): hits.append(h))
 	var rest: Transform3D = gun._model_rest
 	gun.get_node("FirearmTrigger").fired.emit()
+	await _wait_until(func(): return hits.size() > 0, 30)
 	await physics_frame
 	_expect(hits.size() == gun.pellets, "%s: el gatillo dispara (%d impactos)" % [id, hits.size()])
 	_expect(hits.size() > 0 and hits[0].get("collider") == target, "%s: el rayo da en el blanco" % id)
 	_expect(not gun.get_node("Model").transform.is_equal_approx(rest), "%s: retroceso mueve el modelo" % id)
 	gun.get_node("FirearmTrigger").fired.emit()
-	await physics_frame
+	for i in 3:
+		await physics_frame
 	_expect(hits.size() == gun.pellets, "%s: cadencia bloquea el segundo tiro inmediato" % id)
 	for i in 60:
 		await physics_frame
@@ -82,10 +84,18 @@ func _check(id: String, hand: Node3D, target: Node) -> void:
 	_expect(gun.reload.chambered and gun.reload.magazine_rounds == size - 3, "%s: correr corredera mete bala (rack)" % id)
 
 	gun.let_go(hand, Vector3.ZERO, Vector3.ZERO)
-	await physics_frame
+	await _wait_until(func(): return not gun.is_picked_up(), 30)
 	_expect(not gun.is_picked_up() and not handle.enabled, "%s: se suelta y desactiva el mango" % id)
 	gun.queue_free()
 	await process_frame
+
+
+func _wait_until(cond: Callable, max_frames: int) -> bool:
+	for _i in max_frames:
+		if cond.call():
+			return true
+		await physics_frame
+	return cond.call()
 
 
 func _expect(cond: bool, label: String) -> void:

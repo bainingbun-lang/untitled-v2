@@ -25,9 +25,7 @@ func _init() -> void:
 				near += 1
 		var before := npcs.size()
 		victim.take_damage(999.0, victim.global_position, null, "torso")
-		t0 = Time.get_ticks_msec()
-		while Time.get_ticks_msec() - t0 < 1500:
-			await process_frame
+		await _wait_until(func(): return near == 0 or npcs.any(func(o): return o != victim and is_instance_valid(o) and o.get_node_or_null("Shout") != null), 300)
 		var alarmed := 0
 		for o in npcs:
 			if o != victim and o.get_node_or_null("Shout") != null:
@@ -40,6 +38,14 @@ func _init() -> void:
 		_expect(after >= before, "no se pierden NPC al reaccionar")
 	print("RESULTADO: %s (%d fallos)" % ["OK" if _fails == 0 else "FALLO", _fails])
 	quit(0 if _fails == 0 else 1)
+
+
+func _wait_until(cond: Callable, max_frames: int) -> bool:
+	for _i in max_frames:
+		if cond.call():
+			return true
+		await physics_frame
+	return cond.call()
 
 
 func _expect(cond: bool, label: String) -> void:

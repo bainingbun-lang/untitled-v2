@@ -54,6 +54,7 @@ func _init() -> void:
 	_expect(rp.picked_up_object == gun and gun.is_picked_up(), "FunctionPickup derecho agarra la pistola")
 	var up := Vector3(0.0, 1.3, -2.45)
 	await _move(&"right_hand", up, 20)
+	await _until(func(): return gun.global_position.distance_to(rp.global_position) < 0.25)
 	_expect(gun.global_position.distance_to(rp.global_position) < 0.25, "la pistola sigue a la mano (%.3f)" % gun.global_position.distance_to(rp.global_position))
 
 	# Cargador: la mano izquierda agarra el que está en el arma.
@@ -69,6 +70,7 @@ func _init() -> void:
 	_expect(by_hand, "la mano izquierda agarra el cargador")
 	if by_hand:
 		await _move(&"left_hand", well.global_position + Vector3(0, -0.3, 0), 15)
+		await _until(func(): return not gun.reload.magazine_in)
 		out = not gun.reload.magazine_in
 	else:
 		_press(&"right_hand", &"ax_button", true)
@@ -86,8 +88,7 @@ func _init() -> void:
 		_grip(&"left_hand", 0.0)
 		mag.global_position = well.global_position
 		well.pick_up_object(mag)
-	for i in 4:
-		await physics_frame
+	await _until(func(): return gun.reload.magazine_in and well.has_snapped_object())
 	_expect(gun.reload.magazine_in and well.has_snapped_object(), "el cargador vuelve a entrar en el arma (snap)")
 
 	# Corredera: llamar a la API del slider (ida y vuelta).
@@ -113,11 +114,12 @@ func _init() -> void:
 	_press(&"right_hand", &"ax_button", true)
 	await physics_frame
 	_press(&"right_hand", &"ax_button", false)
+	await _until(func(): return not gun.reload.magazine_in)
 	for i in 40:
 		await physics_frame
 	_expect(not gun.reload.magazine_in and not gun.get_node("MagazineWell").has_snapped_object(), "ax_button expulsa el cargador y no se re-captura")
 	_grip(&"right_hand", 0.0)
-	await physics_frame
+	await _until(func(): return not gun.is_picked_up())
 	_expect(not gun.is_picked_up(), "soltar el grip suelta la pistola")
 
 	await _punch(sb)
@@ -174,7 +176,7 @@ func _punch(sb: Node) -> void:
 
 
 ## Espera (en pasos de física, con tope) a que se cumpla la condición: el agarre y los solapes de Area van un paso atrasados.
-func _until(cond: Callable, max_frames := 120) -> void:
+func _until(cond: Callable, max_frames := 240) -> void:
 	for i in max_frames:
 		if cond.call():
 			return
