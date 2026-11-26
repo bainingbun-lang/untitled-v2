@@ -1,6 +1,8 @@
 class_name FirearmTrigger
 extends Node
 
+const Hysteresis = preload("res://weapons/firearm/trigger_hysteresis.gd")
+
 
 @export var mesh_trigger : MeshInstance3D
 
@@ -9,6 +11,7 @@ extends Node
 @export var handle_grabpoints : Array[XRToolsGrabPoint]
 
 var triggered : bool = false
+var _analog_seen : bool = false
 
 ## Se emite al apretar el gatillo con el arma agarrada por la empuñadura.
 signal fired
@@ -34,7 +37,22 @@ func _ready() -> void:
 		handle_grabpoint.enabled = false
 
 
+func _set_pulled(pulled: bool) -> void:
+	if pulled == triggered:
+		return
+	triggered = pulled
+	mesh_trigger.rotate(Vector3(1, 0, 0), -value if pulled else value)
+	if pulled:
+		fired.emit()
+
+
 func _physics_process(_delta):
+	if _current_controller:
+		var v := _current_controller.get_float("trigger")
+		if v > 0.0:
+			_analog_seen = true
+		if _analog_seen:
+			_set_pulled(Hysteresis.next_state(triggered, v))
 	if is_instance_valid(_parent):
 		# toggle handle grabpoints if parent got grabbed/released
 		if _parent.get_picked_up_by():
@@ -84,18 +102,14 @@ func _update_controller_signals() -> void:
 # Called when a controller button is released
 func _on_controller_trigger_released(trigger_button : String):
 	# Skip if not pose-toggle button
-	if trigger_button != "trigger_click":
+	if trigger_button != "trigger_click" or _analog_seen:
 		return
-
-	mesh_trigger.rotate(Vector3(1, 0, 0), value)
-	triggered = false
+	_set_pulled(false)
 
 
 # Called when a controller button is pressed
 func _on_controller_trigger_pressed(trigger_button : String):
 	# Skip if not pose-toggle button
-	if trigger_button != "trigger_click":
+	if trigger_button != "trigger_click" or _analog_seen:
 		return
-	triggered = true
-	fired.emit()
-	mesh_trigger.rotate(Vector3(1, 0, 0), -value)
+	_set_pulled(true)
