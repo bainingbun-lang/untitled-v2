@@ -56,10 +56,12 @@ func _check(id: String, hand: Node3D, target: Node) -> void:
 	gun.shot.connect(func(h): hits.append(h))
 	var rest: Transform3D = gun._model_rest
 	gun.get_node("FirearmTrigger").fired.emit()
+	await physics_frame
 	_expect(hits.size() == gun.pellets, "%s: el gatillo dispara (%d impactos)" % [id, hits.size()])
 	_expect(hits.size() > 0 and hits[0].get("collider") == target, "%s: el rayo da en el blanco" % id)
 	_expect(not gun.get_node("Model").transform.is_equal_approx(rest), "%s: retroceso mueve el modelo" % id)
 	gun.get_node("FirearmTrigger").fired.emit()
+	await physics_frame
 	_expect(hits.size() == gun.pellets, "%s: cadencia bloquea el segundo tiro inmediato" % id)
 	for i in 60:
 		await physics_frame

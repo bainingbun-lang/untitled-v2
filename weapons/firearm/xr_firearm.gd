@@ -34,6 +34,7 @@ var _trigger: Node
 var _muzzle: Node3D
 var _handle: XRToolsPickable
 var _eject_ctrl: XRController3D
+var _shot_pending := false
 
 
 func _ready() -> void:
@@ -72,6 +73,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_cooldown = maxf(0.0, _cooldown - delta)
+	if _shot_pending:
+		_shot_pending = false
+		_cast_shot()
 	if automatic and _trigger and _trigger.triggered:
 		try_fire()
 	if _model:
@@ -90,10 +94,15 @@ func try_fire() -> bool:
 	RemoteLog.crumb("FIRE %s: sonido ok" % name)
 	_kick()
 	RemoteLog.crumb("FIRE %s: kick ok" % name)
+	_shot_pending = true # el rayo se lanza en _physics_process: direct_space_state fuera del paso de fisica cierra el juego
+	return true
+
+
+func _cast_shot() -> void:
 	var world := get_world_3d()
-	if world == null:
+	if world == null or _muzzle == null or not is_instance_valid(_muzzle):
 		RemoteLog.crumb("FIRE %s: sin mundo" % name)
-		return false
+		return
 	var space := world.direct_space_state
 	RemoteLog.crumb("FIRE %s: espacio ok" % name)
 	var exclude: Array[RID] = [get_rid()]
@@ -115,7 +124,6 @@ func try_fire() -> bool:
 			BulletImpact.apply(hit["collider"], hit["position"], hit["normal"], damage / pellets, self)
 		shot.emit(hit)
 	RemoteLog.crumb("FIRE %s: fin" % name)
-	return true
 
 
 func _kick() -> void:
